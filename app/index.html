@@ -6,22 +6,21 @@
 <title>Amtrak Network Site Survey</title>
 <link rel="stylesheet" href="style.css">
 <link rel="manifest" href="manifest.json">
-<!-- QR Code library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
+<canvas id="bg-canvas"></canvas>
 <div id="app">
 
-  <!-- ── Sidebar ── -->
   <nav id="sidebar" aria-label="Survey navigation">
     <div class="sidebar-header">
       <div class="logo">
         <div class="logo-icon">&#9650;</div>
         <div class="logo-text"><span>NetSurvey</span><span>Amtrak IT</span></div>
       </div>
-      <button id="sidebar-close" aria-label="Close menu">&#10005;</button>
+      <button id="sidebar-close" aria-label="Close">&#10005;</button>
     </div>
-    <p class="nav-section-label">Survey sections</p>
+    <p class="nav-label">Sections</p>
     <ul class="nav-list">
       <li><a href="#" class="nav-link active" data-section="site-info"><span class="nav-icon">&#127968;</span> Site Info <span class="nav-dot"></span></a></li>
       <li><a href="#" class="nav-link" data-section="location"><span class="nav-icon">&#128205;</span> Location <span class="nav-dot"></span></a></li>
@@ -31,10 +30,10 @@
       <li><a href="#" class="nav-link" data-section="contacts"><span class="nav-icon">&#128101;</span> Contacts <span class="nav-dot"></span></a></li>
       <li><a href="#" class="nav-link" data-section="findings"><span class="nav-icon">&#128203;</span> Findings <span class="nav-dot"></span></a></li>
     </ul>
-    <p class="nav-section-label">Tools</p>
-    <div style="padding:0 10px 10px;">
+    <p class="nav-label">Tools</p>
+    <div class="sidebar-tools">
       <button class="tool-btn" onclick="openHistory()">&#128193; Survey history</button>
-      <button class="tool-btn" id="dark-mode-btn" onclick="toggleDarkMode()">&#127769; Dark mode</button>
+      <button class="tool-btn" id="dark-mode-btn" onclick="toggleDarkMode()">&#9728; Light mode</button>
       <button class="tool-btn" onclick="openQR()">&#9707; QR code</button>
       <button class="tool-btn" onclick="exportPDF()">&#128438; Print / PDF</button>
     </div>
@@ -45,10 +44,9 @@
 
   <div id="overlay" onclick="closeSidebar()"></div>
 
-  <!-- ── Main ── -->
   <div id="main">
     <header id="topbar">
-      <button id="menu-btn" aria-label="Open menu">&#9776;</button>
+      <button id="menu-btn" aria-label="Menu">&#9776;</button>
       <div class="topbar-title">
         <h1 id="topbar-heading">Network Site Survey</h1>
         <span id="survey-id-display" class="survey-id-badge"></span>
@@ -56,27 +54,23 @@
       <div class="topbar-actions">
         <span id="save-status" class="save-status"></span>
         <button class="btn btn-outline" onclick="openQR()">&#9707; QR</button>
-        <button class="btn btn-outline" onclick="exportPDF()">&#8681; Export</button>
+        <button class="btn btn-ghost" onclick="exportPDF()">&#8681; Export</button>
         <button class="btn btn-primary" onclick="saveSurvey()">&#10003; Save</button>
       </div>
     </header>
     <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 
     <main id="content">
-      <!-- Print letterhead (visible only when printing) -->
       <div class="print-header">
-        <div>
-          <div class="print-header-logo">&#9650; AMTRAK</div>
-          <div class="print-header-sub">Network Site Survey — IT Infrastructure</div>
-        </div>
-        <div class="print-header-date" id="print-date"></div>
+        <div class="print-logo">&#9650; AMTRAK</div>
+        <div id="print-date"></div>
       </div>
 
-      <!-- ── SITE INFO ── -->
+      <!-- SITE INFO -->
       <section id="site-info" class="survey-section active-section">
         <div class="section-header">
-          <div class="section-icon blue">&#127968;</div>
-          <div><h2>Site information</h2><p class="section-sub">Basic details about this survey and the Amtrak site</p></div>
+          <div class="section-icon">&#127968;</div>
+          <div><h2>Site information</h2><p class="section-sub">Basic details about this survey and the Amtrak site location</p></div>
         </div>
         <div class="card card-accent">
           <div class="field-grid col2">
@@ -101,18 +95,18 @@
               <label>Network status</label>
               <div class="pill-group" id="status-pills">
                 <button class="pill" data-val="operational" onclick="togglePill(this,'status-pills')">&#9679; Operational</button>
-                <button class="pill" data-val="degraded"    onclick="togglePill(this,'status-pills')">&#9679; Degraded</button>
-                <button class="pill" data-val="offline"     onclick="togglePill(this,'status-pills')">&#9679; Offline</button>
+                <button class="pill" data-val="degraded" onclick="togglePill(this,'status-pills')">&#9679; Degraded</button>
+                <button class="pill" data-val="offline" onclick="togglePill(this,'status-pills')">&#9679; Offline</button>
               </div>
             </div>
             <div class="field-group">
               <label>Signal strength <span id="signal-label" class="field-hint"></span></label>
               <div class="signal-row">
-                <button class="signal-bar" onclick="setSignal(1)" aria-label="1"></button>
-                <button class="signal-bar" onclick="setSignal(2)" aria-label="2"></button>
-                <button class="signal-bar" onclick="setSignal(3)" aria-label="3"></button>
-                <button class="signal-bar" onclick="setSignal(4)" aria-label="4"></button>
-                <button class="signal-bar" onclick="setSignal(5)" aria-label="5"></button>
+                <button class="signal-bar" onclick="setSignal(1)"></button>
+                <button class="signal-bar" onclick="setSignal(2)"></button>
+                <button class="signal-bar" onclick="setSignal(3)"></button>
+                <button class="signal-bar" onclick="setSignal(4)"></button>
+                <button class="signal-bar" onclick="setSignal(5)"></button>
               </div>
             </div>
           </div>
@@ -120,10 +114,10 @@
         <div class="section-nav"><span></span><button class="btn btn-primary" onclick="goToSection('location')">Next: Location &#8250;</button></div>
       </section>
 
-      <!-- ── LOCATION ── -->
+      <!-- LOCATION -->
       <section id="location" class="survey-section">
         <div class="section-header">
-          <div class="section-icon teal">&#128205;</div>
+          <div class="section-icon">&#128205;</div>
           <div><h2>Location &amp; layout</h2><p class="section-sub">Physical area details and access information</p></div>
         </div>
         <div class="card">
@@ -132,32 +126,29 @@
             <div class="field-group"><label>Room / Zone</label><input type="text" id="room-zone" placeholder="e.g. Server room 104" oninput="autoSave()"></div>
             <div class="field-group"><label>GPS / Coordinates</label><input type="text" id="gps" placeholder="Optional – lat, long" oninput="autoSave()"></div>
             <div class="field-group"><label>Nearest landmark</label><input type="text" id="landmark" placeholder="e.g. Near south entrance" oninput="autoSave()"></div>
-            <div class="field-group col-full"><label>Access instructions</label><input type="text" id="access-instructions" placeholder="e.g. Badge access required, ask operations desk" oninput="autoSave()"></div>
+            <div class="field-group col-full"><label>Access instructions</label><input type="text" id="access-instructions" placeholder="e.g. Badge access required" oninput="autoSave()"></div>
             <div class="field-group col-full"><label>Floor plan / coverage notes</label><textarea id="floorplan-notes" rows="4" placeholder="Describe the physical area — walls, obstacles, dead zones, conduit paths, etc." oninput="autoSave()"></textarea></div>
           </div>
         </div>
-        <!-- Photo upload -->
         <div class="card">
           <h3 class="sub-heading">&#128247; Site photos</h3>
-          <p class="field-hint mb-12">Upload photos of the location, equipment rooms, or any relevant areas.</p>
+          <p class="field-hint mb-12">Upload photos of the location, equipment rooms, or relevant areas.</p>
           <div class="photo-grid" id="photo-grid">
-            <div class="photo-upload-btn" onclick="document.getElementById('photo-input').click()">
-              <span>&#128247;</span>Add photo
-            </div>
+            <div class="photo-upload-btn" onclick="document.getElementById('photo-input').click()"><span>&#128247;</span>Add photo</div>
           </div>
           <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotoUpload(this)">
         </div>
         <div class="section-nav">
-          <button class="btn btn-outline-dark" onclick="goToSection('site-info')">&#8249; Site Info</button>
+          <button class="btn btn-ghost" onclick="goToSection('site-info')">&#8249; Site Info</button>
           <button class="btn btn-primary" onclick="goToSection('existing-eq')">Next: Equipment &#8250;</button>
         </div>
       </section>
 
-      <!-- ── EXISTING EQUIPMENT ── -->
+      <!-- EXISTING EQUIPMENT -->
       <section id="existing-eq" class="survey-section">
         <div class="section-header">
-          <div class="section-icon purple">&#128268;</div>
-          <div><h2>Existing network equipment</h2><p class="section-sub">Document all currently installed devices on site</p></div>
+          <div class="section-icon">&#128268;</div>
+          <div><h2>Existing network equipment</h2><p class="section-sub">Document all currently installed devices</p></div>
         </div>
         <div class="card">
           <div class="table-wrap">
@@ -183,15 +174,15 @@
           </div>
         </div>
         <div class="section-nav">
-          <button class="btn btn-outline-dark" onclick="goToSection('location')">&#8249; Location</button>
+          <button class="btn btn-ghost" onclick="goToSection('location')">&#8249; Location</button>
           <button class="btn btn-primary" onclick="goToSection('cabling')">Next: Cabling &#8250;</button>
         </div>
       </section>
 
-      <!-- ── CABLING ── -->
+      <!-- CABLING -->
       <section id="cabling" class="survey-section">
         <div class="section-header">
-          <div class="section-icon amber">&#128305;</div>
+          <div class="section-icon">&#128305;</div>
           <div><h2>Cabling &amp; infrastructure</h2><p class="section-sub">Physical cabling, ports, and infrastructure details</p></div>
         </div>
         <div class="card">
@@ -211,15 +202,15 @@
           </div>
         </div>
         <div class="section-nav">
-          <button class="btn btn-outline-dark" onclick="goToSection('existing-eq')">&#8249; Equipment</button>
+          <button class="btn btn-ghost" onclick="goToSection('existing-eq')">&#8249; Equipment</button>
           <button class="btn btn-primary" onclick="goToSection('future-eq')">Next: Planned &#8250;</button>
         </div>
       </section>
 
-      <!-- ── FUTURE EQUIPMENT ── -->
+      <!-- FUTURE EQUIPMENT -->
       <section id="future-eq" class="survey-section">
         <div class="section-header">
-          <div class="section-icon green">&#43;</div>
+          <div class="section-icon">&#43;</div>
           <div><h2>Planned / future equipment</h2><p class="section-sub">Equipment to be installed — Cisco, Arista, VeloCloud and more</p></div>
         </div>
         <div class="chip-row">
@@ -251,29 +242,29 @@
           </div>
         </div>
         <div class="section-nav">
-          <button class="btn btn-outline-dark" onclick="goToSection('cabling')">&#8249; Cabling</button>
+          <button class="btn btn-ghost" onclick="goToSection('cabling')">&#8249; Cabling</button>
           <button class="btn btn-primary" onclick="goToSection('contacts')">Next: Contacts &#8250;</button>
         </div>
       </section>
 
-      <!-- ── CONTACTS ── -->
+      <!-- CONTACTS -->
       <section id="contacts" class="survey-section">
         <div class="section-header">
-          <div class="section-icon coral">&#128101;</div>
+          <div class="section-icon">&#128101;</div>
           <div><h2>Key contacts</h2><p class="section-sub">Site managers, IT staff, and ISP contacts</p></div>
         </div>
         <div id="contacts-list"></div>
         <button class="btn-dashed" onclick="addContact()">+ Add contact</button>
         <div class="section-nav">
-          <button class="btn btn-outline-dark" onclick="goToSection('future-eq')">&#8249; Planned</button>
+          <button class="btn btn-ghost" onclick="goToSection('future-eq')">&#8249; Planned</button>
           <button class="btn btn-primary" onclick="goToSection('findings')">Next: Findings &#8250;</button>
         </div>
       </section>
 
-      <!-- ── FINDINGS ── -->
+      <!-- FINDINGS -->
       <section id="findings" class="survey-section">
         <div class="section-header">
-          <div class="section-icon blue">&#128203;</div>
+          <div class="section-icon">&#128203;</div>
           <div><h2>Findings &amp; recommendations</h2><p class="section-sub">Summary of issues, recommendations, and next steps</p></div>
         </div>
         <div class="card">
@@ -295,49 +286,40 @@
           <h3 class="sub-heading">Survey complete</h3>
           <p class="field-hint mb-12">Export, print, or share your completed survey.</p>
           <div class="action-row">
-            <button class="btn btn-outline-dark" onclick="exportTXT()">&#8681; Text</button>
-            <button class="btn btn-outline-dark" onclick="exportJSON()">&#8681; JSON</button>
-            <button class="btn btn-outline-dark" onclick="openQR()">&#9707; QR Code</button>
-            <button class="btn btn-outline-dark" onclick="exportPDF()">&#128438; Print / PDF</button>
+            <button class="btn btn-ghost" onclick="exportTXT()">&#8681; Text</button>
+            <button class="btn btn-ghost" onclick="exportJSON()">&#8681; JSON</button>
+            <button class="btn btn-outline" onclick="openQR()">&#9707; QR Code</button>
+            <button class="btn btn-ghost" onclick="exportPDF()">&#128438; Print / PDF</button>
             <button class="btn btn-primary" onclick="saveSurvey()">&#10003; Save</button>
           </div>
         </div>
         <div class="section-nav">
-          <button class="btn btn-outline-dark" onclick="goToSection('contacts')">&#8249; Contacts</button>
+          <button class="btn btn-ghost" onclick="goToSection('contacts')">&#8249; Contacts</button>
           <span></span>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- ── HISTORY MODAL ── -->
+  <!-- HISTORY MODAL -->
   <div class="modal-backdrop" id="history-modal">
     <div class="modal">
-      <div class="modal-header">
-        <h3>&#128193; Survey history</h3>
-        <button class="modal-close" onclick="closeModal('history-modal')">&#10005;</button>
-      </div>
+      <div class="modal-header"><h3>&#128193; Survey history</h3><button class="modal-close" onclick="closeModal('history-modal')">&#10005;</button></div>
       <div id="history-list"></div>
     </div>
   </div>
 
-  <!-- ── QR MODAL ── -->
+  <!-- QR MODAL -->
   <div class="modal-backdrop" id="qr-modal">
     <div class="modal">
-      <div class="modal-header">
-        <h3>&#9707; QR Code</h3>
-        <button class="modal-close" onclick="closeModal('qr-modal')">&#10005;</button>
-      </div>
+      <div class="modal-header"><h3>&#9707; QR Code</h3><button class="modal-close" onclick="closeModal('qr-modal')">&#10005;</button></div>
       <div class="field-group" style="margin-bottom:14px;">
         <label>URL to encode</label>
         <input type="text" id="qr-url-input" placeholder="http://YOUR-LXC-IP:PORT" oninput="regenerateQR()">
       </div>
-      <div class="qr-container">
-        <div id="qr-code"></div>
-        <p class="qr-url" id="qr-url-display"></p>
-      </div>
+      <div class="qr-container"><div id="qr-code"></div><p class="qr-url" id="qr-url-display"></p></div>
       <div class="qr-actions">
-        <button class="btn btn-outline-dark" onclick="downloadQR()">&#8681; Download QR</button>
+        <button class="btn btn-ghost" onclick="downloadQR()">&#8681; Download QR</button>
         <button class="btn btn-primary" onclick="copyQRUrl()">&#128203; Copy URL</button>
       </div>
     </div>
@@ -347,6 +329,7 @@
 </div>
 
 <script src="data.js"></script>
+<script src="bg.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
