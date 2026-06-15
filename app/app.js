@@ -1,4 +1,4 @@
-let state={surveyId:'',signalLevel:0,statusVal:'',futureCounts:{cisco:0,arista:0,other:0},activeVendor:null,currentSection:'site-info',photos:[],darkMode:false};
+let state={surveyId:'',signalLevel:0,statusVal:'',futureCounts:{cisco:0,arista:0,other:0},activeVendor:null,currentSection:'site-info',photos:[],darkMode:false,networkSnapshot:null};
 const SECTIONS=['site-info','location','existing-eq','cabling','rack-capture','future-eq','contacts','findings'];
 const SIGNAL_LABELS=['','Very poor','Poor','Fair','Good','Excellent'];
 let autoSaveTimer=null,eqCount=0,ctCount=0,futureCount=0;
@@ -17,8 +17,126 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('sidebar-close').addEventListener('click',closeSidebar);
   document.getElementById('qr-url-input').value=window.location.origin||'http://localhost:8080';
   if(window.initRack)initRack();
+  // Start sensors
+  initSensors();
 });
 
+// ── Sensors init ──
+function initSensors(){
+  // Network: start watching immediately
+  Sensors.watchNetwork(net=>{
+    updateNetworkUI(net);
+    updateNetworkWidget(net);
+  });
+  updateNetworkUI(Sensors.network);
+  updateNetworkWidget(Sensors.network);
+
+  // GPS: start watching
+  Sensors.startGPS(
+    gps=>{
+      updateGPSUI(gps);
+      // Auto-fill GPS field if empty
+      const gpsField=document.getElementById('gps');
+      if(gpsField&&!gpsField.value){
+        gpsField.value=Sensors.formatCoords();
+        updateGPSMapRow(gps);
+        autoSave();
+      }
+    },
+    err=>{ document.getElementById('gps-status-text').textContent='GPS: '+err }
+  );
+}
+
+// ── GPS UI updates ──
+function updateGPSUI(gps){
+  const dot=document.getElementById('gps-dot');
+  const txt=document.getElementById('gps-status-text');
+  const link=document.getElementById('gps-maps-link');
+  if(dot){dot.className='sensor-dot gps-active'}
+  if(txt){txt.textContent='GPS: '+Sensors.formatCoordsDisplay()+(gps.accuracy?' (±'+gps.accuracy+'m)':'')}
+  if(link&&Sensors.getGoogleMapsURL()){
+    link.href=Sensors.getGoogleMapsURL();link.textContent='📍';link.style.display='inline';
+  }
+  const accLabel=document.getElementById('gps-accuracy-label');
+  if(accLabel&&gps.accuracy)accLabel.textContent='± '+gps.accuracy+' m accuracy';
+}
+
+function updateGPSMapRow(gps){
+  const row=document.getElementById('gps-map-row');
+  const mapLink=document.getElementById('gps-open-maps');
+  const ts=document.getElementById('gps-timestamp');
+  if(row)row.style.display='block';
+  if(mapLink)mapLink.href=Sensors.getGoogleMapsURL()||'#';
+  if(ts&&gps.timestamp)ts.textContent='Captured '+gps.timestamp.toLocaleTimeString();
+}
+
+window.stampGPS=function(){
+  const btn=document.getElementById('gps-stamp-btn');
+  if(btn){btn.textContent='⟳ Getting…';btn.disabled=true}
+  Sensors.getOnceGPS(
+    gps=>{
+      const field=document.getElementById('gps');
+      if(field)field.value=Sensors.formatCoords();
+      updateGPSUI(gps);
+      updateGPSMapRow(gps);
+      autoSave();
+      if(btn){btn.textContent='✓ Got GPS';btn.disabled=false;setTimeout(()=>btn.textContent='▷ Refresh',2000)}
+      showToast('GPS location captured ✓');
+    },
+    err=>{
+      showToast('GPS error: '+err);
+      if(btn){btn.textContent='▷ Get GPS';btn.disabled=false}
+    }
+  );
+};
+
+// ── Network UI updates ──
+function updateNetworkUI(net){
+  const txt=document.getElementById('net-status-text');
+  const bars=document.querySelectorAll('#signal-mini .signal-mini-bar');
+  const speedItem=document.getElementById('net-speed-item');
+  const speedTxt=document.getElementById('net-speed-text');
+  const dot=document.getElementById('gps-dot'); // reuse sensor bar
+  if(txt)txt.textContent='Network: '+(net.signal||'Unknown');
+  bars.forEach((b,i)=>b.classList.toggle('lit',i<net.bars));
+  if(net.downlink&&speedItem){speedItem.style.display='flex';if(speedTxt)speedTxt.textContent=net.downlink+' Mbps'}
+  // color dot based on bars
+  const nd=document.createElement('div'); // dummy
+  const netDotClass=net.bars>=4?'net-good':net.bars>=2?'net-warn':'net-bad';
+  // update existing dot class after GPS dot
+}
+
+function updateNetworkWidget(net){
+  const typEl=document.getElementById('nw-type');
+  const spEl=document.getElementById('nw-speed');
+  const miniEl=document.getElementById('nw-signal-mini');
+  if(typEl)typEl.textContent=net.signal||'Unknown';
+  if(spEl)spEl.textContent=net.downlink?net.downlink+' Mbps download':(net.effectiveType?net.effectiveType.toUpperCase():'');
+  if(miniEl){
+    miniEl.querySelectorAll('.signal-mini-bar').forEach((b,i)=>b.classList.toggle('lit',i<net.bars));
+  }
+  state.networkSnapshot=net;
+}
+
+window.refreshNetwork=function(){
+  Sensors.readNetwork();
+  updateNetworkUI(Sensors.network);
+  updateNetworkWidget(Sensors.network);
+  showToast('Network info refreshed');
+};
+
+window.stampNetworkToSurvey=function(){
+  const net=Sensors.network;
+  // Auto-fill relevant fields
+  const bw=document.getElementById('bandwidth');
+  if(bw&&!bw.value&&net.downlink)bw.value=net.downlink+' Mbps (device)';
+  const sig=net.bars;
+  setSignal(sig);
+  autoSave();
+  showToast('Network info stamped to survey ✓');
+};
+
+// ── Core nav ──
 function generateSurveyId(){
   const d=new Date();
   state.surveyId=`NSS-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${Math.floor(1000+Math.random()*8999)}`;
@@ -42,8 +160,8 @@ function updateProgress(){
 }
 
 function updateStats(){
-  const fields=document.querySelectorAll('input[type="text"],input[type="date"],textarea,select');
-  let filled=0;fields.forEach(f=>{if(f.value&&f.value.trim())filled++});
+  let filled=0;
+  document.querySelectorAll('input[type="text"],input[type="date"],textarea,select').forEach(f=>{if(f.value&&f.value.trim())filled++});
   const sf=document.getElementById('stat-fields');if(sf)sf.textContent=filled;
   const sp=document.getElementById('stat-photos');if(sp)sp.textContent=state.photos.length;
 }
@@ -72,6 +190,7 @@ function setSignal(n){
   autoSave();
 }
 
+// ── Equipment ──
 const EQ_TYPES=['Router','Switch (managed)','Switch (unmanaged)','Wireless AP','Firewall','Modem','NAS / server','UPS','Patch panel','Other'];
 function addEquipmentRow(data={}){
   eqCount++;const id='eq-'+eqCount,fid='eqphoto-'+eqCount;
@@ -88,19 +207,28 @@ function attachEqPhoto(input,rowId){
   reader.readAsDataURL(file);
 }
 
+// ── Photos with GPS tagging ──
 function handlePhotoUpload(input){
+  const meta=Sensors.buildPhotoMeta('Site photo');
   Array.from(input.files).forEach(file=>{
     const reader=new FileReader();
-    reader.onload=e=>{state.photos.push({src:e.target.result,name:file.name});renderPhotos();autoSave();updateStats()};
+    reader.onload=e=>{
+      state.photos.push({src:e.target.result,name:file.name,...meta});
+      renderPhotos();autoSave();updateStats();
+    };
     reader.readAsDataURL(file);
-  });input.value='';
+  });
+  input.value='';
 }
 
 function renderPhotos(){
   const grid=document.getElementById('photo-grid');grid.innerHTML='';
   state.photos.forEach((p,i)=>{
     const div=document.createElement('div');div.className='photo-thumb';
-    div.innerHTML=`<img src="${p.src}" alt="${p.name}"><div class="photo-caption">${p.name}</div><button class="photo-remove" onclick="removePhoto(${i})">✕</button>`;
+    const gpsTag=p.coords?`<div class="photo-gps">📍 GPS</div>`:'';
+    const gpsTitle=p.coords?` title="GPS: ${p.coords}"`:''
+    div.innerHTML=`<img src="${p.src}" alt="${p.name}"${gpsTitle}>${gpsTag}<div class="photo-caption">${p.name}</div><button class="photo-remove" onclick="removePhoto(${i})">✕</button>`;
+    if(p.coords){div.style.cursor='pointer';div.querySelector('img').onclick=()=>window.open('https://maps.google.com/?q='+p.lat+','+p.lng,'_blank')}
     grid.appendChild(div);
   });
   const btn=document.createElement('div');btn.className='photo-upload-btn';
@@ -110,6 +238,7 @@ function renderPhotos(){
 
 function removePhoto(i){state.photos.splice(i,1);renderPhotos();autoSave();updateStats()}
 
+// ── Contacts ──
 const CT_ROLES=['IT Admin','Network Engineer','Site Manager','Facilities','ISP Contact','Security','Other'];
 function addContact(data={}){
   ctCount++;const id='ct-'+ctCount;
@@ -119,6 +248,7 @@ function addContact(data={}){
   document.getElementById('contacts-list').appendChild(div);
 }
 
+// ── Vendor ──
 function setVendor(v){
   state.activeVendor=state.activeVendor===v?null:v;
   ['cisco','arista','other'].forEach(x=>document.getElementById('vtab-'+x).className='vtab'+(state.activeVendor===x?' active-'+x:''));
@@ -160,7 +290,9 @@ function autoSave(){clearTimeout(autoSaveTimer);document.getElementById('save-st
 
 function gatherFormData(){
   const g=id=>(document.getElementById(id)||{}).value||'';
-  return{surveyId:state.surveyId,siteName:g('site-name'),surveyDate:g('survey-date'),surveyedBy:g('surveyed-by'),ticketNum:g('ticket-num'),siteAddress:g('site-address'),floorArea:g('floor-area'),siteType:g('site-type'),networkStatus:state.statusVal,signalLevel:state.signalLevel,building:g('building'),roomZone:g('room-zone'),gps:g('gps'),landmark:g('landmark'),accessInstructions:g('access-instructions'),floorplanNotes:g('floorplan-notes'),isp:g('isp'),circuitId:g('circuit-id'),wanIp:g('wan-ip'),bandwidth:g('bandwidth'),ssids:g('ssids'),securityProto:g('security-proto'),vlans:g('vlans'),dns:g('dns'),cableType:g('cable-type'),totalPorts:g('total-ports'),activePorts:g('active-ports'),patchPanel:g('patch-panel'),mdfIdf:g('mdf-idf'),cablingNotes:g('cabling-notes'),rackId:g('rack-id'),rackUnits:g('rack-units'),rackNotes:g('rack-notes'),installDate:g('install-date'),installPriority:g('install-priority'),installer:g('installer'),poRef:g('po-ref'),installNotes:g('install-notes'),issues:g('issues'),recommendations:g('recommendations'),followup:g('followup'),estCompletion:g('est-completion'),extraNotes:g('extra-notes'),futureCounts:state.futureCounts,photoCount:state.photos.length,savedAt:new Date().toISOString()};
+  const gpsData={coords:Sensors.formatCoords(),lat:Sensors.gps.lat,lng:Sensors.gps.lng,accuracy:Sensors.gps.accuracy};
+  const netData={type:Sensors.network.type,effectiveType:Sensors.network.effectiveType,signal:Sensors.network.signal,bars:Sensors.network.bars,downlink:Sensors.network.downlink};
+  return{surveyId:state.surveyId,siteName:g('site-name'),surveyDate:g('survey-date'),surveyedBy:g('surveyed-by'),ticketNum:g('ticket-num'),siteAddress:g('site-address'),floorArea:g('floor-area'),siteType:g('site-type'),networkStatus:state.statusVal,signalLevel:state.signalLevel,building:g('building'),roomZone:g('room-zone'),gps:g('gps'),gpsData,netData,landmark:g('landmark'),accessInstructions:g('access-instructions'),floorplanNotes:g('floorplan-notes'),isp:g('isp'),circuitId:g('circuit-id'),wanIp:g('wan-ip'),bandwidth:g('bandwidth'),ssids:g('ssids'),securityProto:g('security-proto'),vlans:g('vlans'),dns:g('dns'),cableType:g('cable-type'),totalPorts:g('total-ports'),activePorts:g('active-ports'),patchPanel:g('patch-panel'),mdfIdf:g('mdf-idf'),cablingNotes:g('cabling-notes'),rackId:g('rack-id'),rackUnits:g('rack-units'),rackNotes:g('rack-notes'),installDate:g('install-date'),installPriority:g('install-priority'),installer:g('installer'),poRef:g('po-ref'),installNotes:g('install-notes'),issues:g('issues'),recommendations:g('recommendations'),followup:g('followup'),estCompletion:g('est-completion'),extraNotes:g('extra-notes'),futureCounts:state.futureCounts,photoCount:state.photos.length,photosWithGPS:state.photos.filter(p=>p.coords).length,savedAt:new Date().toISOString()};
 }
 
 function saveSurvey(silent=false){
@@ -190,6 +322,7 @@ function loadFromStorage(){
     if(d.signalLevel)setSignal(d.signalLevel);
     if(d.networkStatus){const p=document.querySelector(`[data-val="${d.networkStatus}"]`);if(p)togglePill(p,'status-pills')}
     set('building',d.building);set('room-zone',d.roomZone);set('gps',d.gps);set('landmark',d.landmark);set('access-instructions',d.accessInstructions);set('floorplan-notes',d.floorplanNotes);
+    if(d.gps){const row=document.getElementById('gps-map-row');if(row&&d.gpsData&&d.gpsData.lat){row.style.display='block';const ml=document.getElementById('gps-open-maps');if(ml)ml.href='https://maps.google.com/?q='+d.gpsData.lat+','+d.gpsData.lng}}
     set('isp',d.isp);set('circuit-id',d.circuitId);set('wan-ip',d.wanIp);set('bandwidth',d.bandwidth);set('ssids',d.ssids);set('security-proto',d.securityProto);set('vlans',d.vlans);set('dns',d.dns);
     set('cable-type',d.cableType);set('total-ports',d.totalPorts);set('active-ports',d.activePorts);set('patch-panel',d.patchPanel);set('mdf-idf',d.mdfIdf);set('cabling-notes',d.cablingNotes);
     set('rack-id',d.rackId);set('rack-units',d.rackUnits);set('rack-notes',d.rackNotes);
@@ -201,10 +334,7 @@ function loadFromStorage(){
   }catch(e){console.warn('Load failed',e)}
 }
 
-function newSurvey(){
-  if(!confirm('Start a new survey? Current survey stays saved in history.'))return;
-  saveSurvey(true);location.reload();
-}
+function newSurvey(){if(!confirm('Start a new survey? Current stays in history.'))return;saveSurvey(true);location.reload()}
 
 function openHistory(){
   const list=document.getElementById('history-list');
@@ -213,15 +343,8 @@ function openHistory(){
   else{list.innerHTML=index.map(s=>`<div class="history-item" onclick="loadSurvey('${s.id}')"><div class="history-item-info"><h4>${s.name||'Untitled'}</h4><p>${s.id} · ${s.date||'—'} · ${new Date(s.savedAt).toLocaleString()}</p></div><div class="history-item-actions"><button class="btn btn-danger" style="padding:5px 10px;font-size:11px" onclick="event.stopPropagation();deleteSurvey('${s.id}')">🗑</button><button class="btn btn-outline" style="padding:5px 10px;font-size:11px">Load →</button></div></div>`).join('')}
   openModal('history-modal');
 }
-
 function loadSurvey(id){localStorage.setItem('netsurvey_latest',id);closeModal('history-modal');location.reload()}
-function deleteSurvey(id){
-  if(!confirm('Delete this survey?'))return;
-  localStorage.removeItem('netsurvey_'+id);
-  let index=JSON.parse(localStorage.getItem('netsurvey_index')||'[]');
-  localStorage.setItem('netsurvey_index',JSON.stringify(index.filter(s=>s.id!==id)));
-  openHistory();
-}
+function deleteSurvey(id){if(!confirm('Delete?'))return;localStorage.removeItem('netsurvey_'+id);let idx=JSON.parse(localStorage.getItem('netsurvey_index')||'[]');localStorage.setItem('netsurvey_index',JSON.stringify(idx.filter(s=>s.id!==id)));openHistory()}
 
 function openQR(){openModal('qr-modal');setTimeout(generateQR,100)}
 function generateQR(){
@@ -229,19 +352,18 @@ function generateQR(){
   document.getElementById('qr-url-display').textContent=url;
   const c=document.getElementById('qr-code');c.innerHTML='';
   try{new QRCode(c,{text:url,width:200,height:200,colorDark:'#003A5D',colorLight:'#FFFFFF',correctLevel:QRCode.CorrectLevel.H})}
-  catch(e){c.innerHTML='<p style="color:var(--text3);font-size:12px">QR unavailable — check internet.</p>'}
+  catch(e){c.innerHTML='<p style="color:var(--text3);font-size:12px">QR unavailable.</p>'}
 }
 function regenerateQR(){clearTimeout(regenerateQR._t);regenerateQR._t=setTimeout(generateQR,400)}
-function downloadQR(){const canvas=document.querySelector('#qr-code canvas');if(!canvas){showToast('Generate QR first');return}const a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download='amtrak-netsurvey-qr.png';a.click();showToast('QR downloaded')}
+function downloadQR(){const c=document.querySelector('#qr-code canvas');if(!c){showToast('Generate QR first');return}const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='amtrak-netsurvey-qr.png';a.click();showToast('QR downloaded')}
 function copyQRUrl(){const url=document.getElementById('qr-url-input').value;if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>showToast('URL copied ✓'))}
-
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 document.addEventListener('click',e=>{if(e.target.classList.contains('modal-backdrop'))closeModal(e.target.id)});
 
 function exportTXT(){
   const d=gatherFormData();
-  const lines=['╔══════════════════════════════════════╗','║     AMTRAK NETWORK SITE SURVEY       ║','╚══════════════════════════════════════╝',`ID: ${d.surveyId}  Date: ${d.surveyDate}  By: ${d.surveyedBy}`,`Ticket: ${d.ticketNum||'N/A'}`,'','── SITE ──',`${d.siteName} | ${d.siteAddress} | ${d.floorArea} | ${d.siteType}`,`Status: ${d.networkStatus}  Signal: ${SIGNAL_LABELS[d.signalLevel]||'N/A'}`,'','── LOCATION ──',`${d.building} / ${d.roomZone}  GPS: ${d.gps}`,`Access: ${d.accessInstructions}`,`Notes: ${d.floorplanNotes}`,'','── NETWORK ──',`ISP: ${d.isp}  Circuit: ${d.circuitId}  WAN: ${d.wanIp}  BW: ${d.bandwidth}`,`SSIDs: ${d.ssids}  Security: ${d.securityProto}  VLANs: ${d.vlans}  DNS: ${d.dns}`,'','── CABLING ──',`${d.cableType}  Total: ${d.totalPorts}  Active: ${d.activePorts}`,`Patch panel: ${d.patchPanel}  MDF/IDF: ${d.mdfIdf}`,`Notes: ${d.cablingNotes}`,'','── RACK ──',`Rack: ${d.rackId}  Units: ${d.rackUnits}`,`Notes: ${d.rackNotes}`,'','── PLANNED EQUIPMENT ──',`Cisco: ${d.futureCounts.cisco}  Arista/VC: ${d.futureCounts.arista}  Other: ${d.futureCounts.other}`,`Install: ${d.installDate}  Priority: ${d.installPriority}  By: ${d.installer}  PO: ${d.poRef}`,`Notes: ${d.installNotes}`,'','── FINDINGS ──',`Issues: ${d.issues}`,`Recommendations: ${d.recommendations}`,`Follow-up: ${d.followup}  Est: ${d.estCompletion}`,`Notes: ${d.extraNotes}`,'',`Photos captured: ${d.photoCount}`,`Exported: ${new Date().toLocaleString()}`];
+  const lines=['╔══════════════════════════════════════╗','║     AMTRAK NETWORK SITE SURVEY       ║','╚══════════════════════════════════════╝',`ID: ${d.surveyId}  Date: ${d.surveyDate}  By: ${d.surveyedBy}`,`Ticket: ${d.ticketNum||'N/A'}`,'','── SITE ──',`${d.siteName} | ${d.siteAddress} | ${d.floorArea} | ${d.siteType}`,`Status: ${d.networkStatus}  Signal: ${SIGNAL_LABELS[d.signalLevel]||'N/A'}`,'','── LOCATION ──',`${d.building} / ${d.roomZone}`,`GPS: ${d.gps||'Not captured'}${d.gpsData&&d.gpsData.accuracy?' (±'+d.gpsData.accuracy+'m)':''}`,`Access: ${d.accessInstructions}`,`Notes: ${d.floorplanNotes}`,'','── DEVICE NETWORK AT TIME OF SURVEY ──',`Type: ${d.netData&&d.netData.signal||'Unknown'}  Speed: ${d.netData&&d.netData.downlink?d.netData.downlink+' Mbps':'Unknown'}  Bars: ${d.netData&&d.netData.bars||0}/5`,'','── NETWORK ──',`ISP: ${d.isp}  Circuit: ${d.circuitId}  WAN: ${d.wanIp}  BW: ${d.bandwidth}`,`SSIDs: ${d.ssids}  Security: ${d.securityProto}  VLANs: ${d.vlans}  DNS: ${d.dns}`,'','── CABLING ──',`${d.cableType}  Total: ${d.totalPorts}  Active: ${d.activePorts}`,`Patch panel: ${d.patchPanel}  MDF/IDF: ${d.mdfIdf}`,`Notes: ${d.cablingNotes}`,'','── RACK ──',`Rack: ${d.rackId}  Units: ${d.rackUnits}`,`Notes: ${d.rackNotes}`,'','── PLANNED EQUIPMENT ──',`Cisco: ${d.futureCounts.cisco}  Arista/VC: ${d.futureCounts.arista}  Other: ${d.futureCounts.other}`,`Install: ${d.installDate}  Priority: ${d.installPriority}  By: ${d.installer}  PO: ${d.poRef}`,`Notes: ${d.installNotes}`,'','── FINDINGS ──',`Issues: ${d.issues}`,`Recommendations: ${d.recommendations}`,`Follow-up: ${d.followup}  Est: ${d.estCompletion}`,`Notes: ${d.extraNotes}`,'',`Photos: ${d.photoCount} total, ${d.photosWithGPS} with GPS`,`Exported: ${new Date().toLocaleString()}`];
   downloadFile(lines.join('\n'),`${d.surveyId}.txt`,'text/plain');showToast('Text exported');
 }
 function exportJSON(){const d=gatherFormData();downloadFile(JSON.stringify(d,null,2),`${d.surveyId}.json`,'application/json');showToast('JSON exported')}

@@ -346,3 +346,68 @@ tbody td input,tbody td select{padding:7px 10px;font-size:12px}
   .section-header h2{font-size:20px}
   .stats-row{grid-template-columns:1fr 1fr}
 }
+
+/* ── Real Amtrak Logo ── */
+.amtrak-logo-svg { display:flex; align-items:center; gap:0; }
+.amtrak-speed-lines { flex-shrink:0; }
+.amtrak-wordmark { font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-size:18px; color:#fff; letter-spacing:1.5px; text-transform:uppercase; }
+.amtrak-wordmark-blue { color:#003A5D; }
+.logo-sub-line { font-size:9px; color:var(--cyan); font-weight:500; letter-spacing:2px; text-transform:uppercase; margin-top:1px; display:block; }
+
+/* ── GPS & Signal Banner ── */
+.sensor-bar {
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  padding:8px 14px;
+  background:rgba(0,183,217,0.05);
+  border-bottom:1px solid var(--border);
+  font-size:11px; color:var(--text2);
+}
+.sensor-item { display:flex; align-items:center; gap:6px; }
+.sensor-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.sensor-dot.gps-active   { background:#00DC64; box-shadow:0 0 6px #00DC64; animation:pulse 2s infinite; }
+.sensor-dot.gps-inactive { background:var(--text3); }
+.sensor-dot.net-good     { background:#00DC64; box-shadow:0 0 6px #00DC64; }
+.sensor-dot.net-warn     { background:#FBB843; box-shadow:0 0 6px #FBB843; }
+.sensor-dot.net-bad      { background:#FF6B6B; box-shadow:0 0 6px #FF6B6B; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.sensor-divider { width:1px; height:14px; background:var(--border2); margin:0 4px; }
+.signal-mini { display:flex; align-items:flex-end; gap:1.5px; height:14px; }
+.signal-mini-bar { width:3px; border-radius:1px; background:var(--text3); transition:background 0.3s; }
+.signal-mini-bar.lit { background:var(--cyan); }
+.signal-mini-bar:nth-child(1) { height:4px; }
+.signal-mini-bar:nth-child(2) { height:7px; }
+.signal-mini-bar:nth-child(3) { height:10px; }
+.signal-mini-bar:nth-child(4) { height:13px; }
+.signal-mini-bar:nth-child(5) { height:16px; }
+.gps-coords-link { color:var(--cyan); text-decoration:none; font-family:monospace; font-size:10px; }
+.gps-coords-link:hover { text-decoration:underline; }
+.btn-gps-stamp { padding:3px 8px; font-size:10px; cursor:pointer; background:rgba(0,183,217,0.1); border:1px solid rgba(0,183,217,0.25); border-radius:6px; color:var(--cyan); font-family:inherit; transition:all 0.15s; }
+.btn-gps-stamp:hover { background:rgba(0,183,217,0.2); }
+
+/* ── Photo with GPS overlay ── */
+.photo-thumb .photo-gps {
+  position:absolute; top:5px; left:5px;
+  background:rgba(0,8,20,0.85); color:#00DC64;
+  font-size:9px; padding:2px 5px; border-radius:4px;
+  border:1px solid rgba(0,220,100,0.3); display:flex; align-items:center; gap:3px;
+}
+
+/* ── GPS stamp on field ── */
+.gps-field-wrap { position:relative; }
+.gps-field-wrap input { padding-right:80px; }
+.gps-stamp-btn { position:absolute; right:6px; top:50%; transform:translateY(-50%); padding:3px 8px; font-size:10px; cursor:pointer; background:rgba(0,183,217,0.12); border:1px solid rgba(0,183,217,0.3); border-radius:6px; color:var(--cyan); font-family:inherit; white-space:nowrap; transition:all 0.15s; }
+.gps-stamp-btn:hover { background:rgba(0,183,217,0.22); }
+
+/* ── Network widget in Site Info ── */
+.network-widget {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 16px;
+  background:rgba(0,183,217,0.04);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  margin-top:10px;
+}
+.network-type-badge { font-size:12px; font-weight:700; color:var(--cyan); }
+.network-speed { font-size:11px; color:var(--text3); margin-top:1px; }
+.network-refresh { margin-left:auto; padding:4px 10px; font-size:11px; cursor:pointer; background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--text2); font-family:inherit; transition:all 0.15s; }
+.network-refresh:hover { border-color:var(--cyan); color:var(--cyan); }

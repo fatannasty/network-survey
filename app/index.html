@@ -16,25 +16,17 @@
   <nav id="sidebar" aria-label="Survey navigation">
     <div class="sidebar-top-line"></div>
     <div class="sidebar-header">
-      <div class="amtrak-logo">
-        <div class="amtrak-arrow">
-          <!-- Official Amtrak arrow logo SVG -->
-          <svg viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="42" height="42" rx="10" fill="url(#ag)"/>
-            <path d="M21 7L35 35H7L21 7Z" fill="#003A5D"/>
-            <path d="M21 12L31 32H11L21 12Z" fill="#00B7D9" opacity="0.9"/>
-            <path d="M21 17L27.5 31H14.5L21 17Z" fill="white" opacity="0.95"/>
-            <defs>
-              <linearGradient id="ag" x1="0" y1="0" x2="42" y2="42" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#003A5D"/>
-                <stop offset="100%" stop-color="#001E3C"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-        <div class="logo-text-block">
-          <span class="logo-amtrak">Amtrak</span>
-          <span class="logo-sub">Network Survey</span>
+      <!-- Real Amtrak logo: speed lines + wordmark -->
+      <div class="amtrak-logo-svg">
+        <svg class="amtrak-speed-lines" width="38" height="44" viewBox="0 0 38 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Three curved speed lines matching real Amtrak logo -->
+          <path d="M2 40 C6 28 12 14 26 8 C20 16 17 26 18 36 C16 38 10 40 2 40Z" fill="#00B7D9"/>
+          <path d="M10 40 C14 28 20 14 34 6 C28 15 25 26 26 38 C23 39 17 40 10 40Z" fill="#0094B3"/>
+          <path d="M19 40 C23 28 29 13 38 5 C34 15 32 27 34 40 Z" fill="#007A94"/>
+        </svg>
+        <div style="display:flex;flex-direction:column;margin-left:4px">
+          <span class="amtrak-wordmark">AMTRAK</span>
+          <span class="logo-sub-line">Network Survey</span>
         </div>
       </div>
       <button id="sidebar-close" aria-label="Close">&#10005;</button>
@@ -83,13 +75,41 @@
     </header>
     <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 
+    <!-- Live GPS + Signal sensor bar -->
+    <div class="sensor-bar" id="sensor-bar">
+      <div class="sensor-item">
+        <div class="sensor-dot gps-inactive" id="gps-dot"></div>
+        <span id="gps-status-text">GPS: waiting…</span>
+        <a id="gps-maps-link" class="gps-coords-link" href="#" target="_blank" rel="noopener" style="display:none"></a>
+      </div>
+      <div class="sensor-divider"></div>
+      <div class="sensor-item">
+        <div class="signal-mini" id="signal-mini">
+          <div class="signal-mini-bar"></div>
+          <div class="signal-mini-bar"></div>
+          <div class="signal-mini-bar"></div>
+          <div class="signal-mini-bar"></div>
+          <div class="signal-mini-bar"></div>
+        </div>
+        <span id="net-status-text">Network: detecting…</span>
+      </div>
+      <div class="sensor-divider"></div>
+      <div class="sensor-item" id="net-speed-item" style="display:none">
+        <span id="net-speed-text" style="font-size:10px;color:var(--text3)"></span>
+      </div>
+    </div>
+
     <main id="content">
       <div class="print-header">
-        <div style="display:flex;align-items:center;gap:12px">
-          <svg width="32" height="32" viewBox="0 0 42 42"><rect width="42" height="42" rx="8" fill="#003A5D"/><path d="M21 7L35 35H7L21 7Z" fill="#003A5D"/><path d="M21 12L31 32H11L21 12Z" fill="#00B7D9"/><path d="M21 17L27.5 31H14.5L21 17Z" fill="white"/></svg>
-          <div><div style="font-size:18pt;font-weight:800;color:#003A5D;letter-spacing:2px">AMTRAK</div><div style="font-size:9pt;color:#666">Network Site Survey</div></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <svg width="48" height="28" viewBox="0 0 48 28" fill="none">
+            <path d="M2 25 C5 17 9 8 18 4 C14 9 12 16 13 22 C11 23 7 25 2 25Z" fill="#003A5D"/>
+            <path d="M9 25 C12 17 16 8 25 3 C21 9 19 16 20 24 C18 25 13 25 9 25Z" fill="#003A5D" opacity="0.7"/>
+            <path d="M17 25 C20 17 24 8 33 2 C30 9 28 17 30 25Z" fill="#003A5D" opacity="0.45"/>
+          </svg>
+          <div><div style="font-size:20pt;font-weight:900;color:#003A5D;letter-spacing:2px;font-family:Arial Black,Arial,sans-serif">AMTRAK</div><div style="font-size:8pt;color:#666;letter-spacing:1px">Network Site Survey</div></div>
         </div>
-        <div id="print-date" style="font-size:10pt;color:#333;text-align:right"></div>
+        <div id="print-date" style="font-size:9pt;color:#333;text-align:right"></div>
       </div>
 
       <!-- ── SITE INFO ── -->
@@ -99,7 +119,6 @@
           <div class="section-icon">&#127968;</div>
           <div><h2>Site information</h2><p class="section-sub">Basic details about this survey and the Amtrak site location</p></div>
         </div>
-        <!-- Stats like the screenshot -->
         <div class="stats-row">
           <div class="stat-cell"><div class="stat-num" id="stat-sections">1/8</div><div class="stat-label">Sections complete</div></div>
           <div class="stat-cell"><div class="stat-num" id="stat-fields">0</div><div class="stat-label">Fields filled</div></div>
@@ -122,6 +141,24 @@
               </select>
             </div>
           </div>
+          <div class="divider"></div>
+
+          <!-- Network signal widget (auto-filled) -->
+          <h3 class="sub-heading">&#128246; Live device network</h3>
+          <div class="network-widget" id="network-widget">
+            <div class="signal-mini" id="nw-signal-mini">
+              <div class="signal-mini-bar"></div><div class="signal-mini-bar"></div>
+              <div class="signal-mini-bar"></div><div class="signal-mini-bar"></div>
+              <div class="signal-mini-bar"></div>
+            </div>
+            <div>
+              <div class="network-type-badge" id="nw-type">Detecting…</div>
+              <div class="network-speed" id="nw-speed"></div>
+            </div>
+            <button class="network-refresh" onclick="refreshNetwork()">&#8635; Refresh</button>
+            <button class="btn btn-outline" style="padding:5px 12px;font-size:11px;margin-left:4px" onclick="stampNetworkToSurvey()">&#10003; Stamp to survey</button>
+          </div>
+
           <div class="divider"></div>
           <div class="field-grid col2">
             <div class="field-group">
@@ -150,24 +187,43 @@
         <div class="section-badge">&#128205; Location &amp; Layout</div>
         <div class="section-header">
           <div class="section-icon">&#128205;</div>
-          <div><h2>Location &amp; layout</h2><p class="section-sub">Physical area details and access information</p></div>
+          <div><h2>Location &amp; layout</h2><p class="section-sub">Physical area details — GPS coordinates auto-detected from your device</p></div>
         </div>
         <div class="card card-glow">
           <div class="field-grid col2">
             <div class="field-group"><label>Building / Campus</label><input type="text" id="building" placeholder="e.g. Building A" oninput="autoSave()"></div>
             <div class="field-group"><label>Room / Zone</label><input type="text" id="room-zone" placeholder="e.g. Server room 104" oninput="autoSave()"></div>
-            <div class="field-group"><label>GPS / Coordinates</label><input type="text" id="gps" placeholder="Optional – lat, long" oninput="autoSave()"></div>
+
+            <!-- GPS field with auto-stamp -->
+            <div class="field-group col-full">
+              <label>GPS coordinates <span id="gps-accuracy-label" class="field-hint"></span></label>
+              <div class="gps-field-wrap">
+                <input type="text" id="gps" placeholder="Tap &#9655; to get location" oninput="autoSave()" readonly style="cursor:default">
+                <button class="gps-stamp-btn" onclick="stampGPS()" id="gps-stamp-btn">&#9655; Get GPS</button>
+              </div>
+              <div id="gps-map-row" style="display:none;margin-top:6px">
+                <a id="gps-open-maps" href="#" target="_blank" rel="noopener" class="gps-coords-link" style="font-size:11px">&#128506; Open in Google Maps &#8599;</a>
+                <span style="color:var(--text3);font-size:10px;margin-left:12px" id="gps-timestamp"></span>
+              </div>
+            </div>
+
             <div class="field-group"><label>Nearest landmark</label><input type="text" id="landmark" placeholder="e.g. Near south entrance" oninput="autoSave()"></div>
-            <div class="field-group col-full"><label>Access instructions</label><input type="text" id="access-instructions" placeholder="e.g. Badge access required" oninput="autoSave()"></div>
+            <div class="field-group"><label>Access instructions</label><input type="text" id="access-instructions" placeholder="e.g. Badge access required" oninput="autoSave()"></div>
             <div class="field-group col-full"><label>Floor plan / coverage notes</label><textarea id="floorplan-notes" rows="4" placeholder="Describe the physical area — walls, obstacles, dead zones, conduit paths, etc." oninput="autoSave()"></textarea></div>
           </div>
         </div>
+
+        <!-- Photo upload with GPS tagging -->
         <div class="card">
-          <h3 class="sub-heading">&#128247; Site photos</h3>
+          <h3 class="sub-heading">&#128247; Site photos <span class="field-hint" style="text-transform:none;letter-spacing:0;font-size:11px">(GPS location auto-tagged on each photo)</span></h3>
           <div class="photo-grid" id="photo-grid">
             <div class="photo-upload-btn" onclick="document.getElementById('photo-input').click()"><span>&#128247;</span>Add photo</div>
           </div>
           <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotoUpload(this)">
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <input type="file" accept="image/*" capture="environment" onchange="handlePhotoUpload(this)" style="font-size:12px;background:rgba(0,183,217,0.08);border:1px solid rgba(0,183,217,0.25);color:var(--cyan);border-radius:8px;padding:7px 12px;cursor:pointer;flex:1">
+            <span style="font-size:11px;color:var(--text3);align-self:center">← Use device camera</span>
+          </div>
         </div>
         <div class="section-nav">
           <button class="btn btn-ghost" onclick="goToSection('site-info')">&#8249; Site Info</button>
@@ -245,24 +301,20 @@
         <div class="section-badge">&#128247; Visual Rack Documentation</div>
         <div class="section-header">
           <div class="section-icon">&#128247;</div>
-          <div><h2>Rack capture &amp; cable tracing</h2><p class="section-sub">Photograph the rack, then trace and label every cable visually</p></div>
+          <div><h2>Rack capture &amp; cable tracing</h2><p class="section-sub">Photograph the rack, then trace and label every cable on the image</p></div>
         </div>
-
-        <!-- Upload zone -->
         <div id="rack-upload-zone" class="card card-glow">
           <div class="rack-capture-zone" onclick="document.getElementById('rack-input').click()">
             <span class="rack-capture-icon">&#128423;</span>
             <div class="rack-capture-title">Photograph your network rack</div>
-            <div class="rack-capture-sub">Click to upload or drag &amp; drop a photo — then trace cables directly on the image</div>
+            <div class="rack-capture-sub">Upload or take a photo — then draw cable traces directly on the image</div>
           </div>
           <input type="file" id="rack-input" accept="image/*" onchange="loadRackImage(this)">
-          <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
-            <label style="font-size:12px;color:var(--text2);text-transform:none;letter-spacing:0">Or use camera:</label>
-            <input type="file" accept="image/*" capture="environment" onchange="loadRackImage(this)" style="font-size:12px;background:rgba(0,183,217,0.08);border:1px solid rgba(0,183,217,0.25);color:var(--cyan);border-radius:8px;padding:6px 10px;cursor:pointer">
+          <div style="display:flex;gap:10px;margin-top:12px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:12px;color:var(--text2)">Camera:</span>
+            <input type="file" accept="image/*" capture="environment" onchange="loadRackImage(this)" style="font-size:12px;background:rgba(0,183,217,0.08);border:1px solid rgba(0,183,217,0.25);color:var(--cyan);border-radius:8px;padding:6px 12px;cursor:pointer">
           </div>
         </div>
-
-        <!-- Rack editor (hidden until image loaded) -->
         <div id="rack-editor" style="display:none">
           <div class="card card-glow" style="padding:0;overflow:hidden">
             <div class="rack-preview">
@@ -270,35 +322,31 @@
               <canvas id="rack-canvas" class="rack-canvas"></canvas>
             </div>
             <div class="rack-toolbar">
-              <label>Mode:</label>
-              <button class="btn btn-outline" id="mode-trace" onclick="setMode('trace')" style="padding:6px 12px;font-size:12px">&#9998; Trace cable</button>
-              <button class="btn btn-ghost" id="mode-label" onclick="setMode('label')" style="padding:6px 12px;font-size:12px">&#128204; Add label</button>
+              <label style="font-size:11px;color:var(--text2)">Mode:</label>
+              <button class="btn btn-outline" id="mode-trace" onclick="setMode('trace')" style="padding:6px 12px;font-size:12px">&#9998; Trace</button>
+              <button class="btn btn-ghost" id="mode-label" onclick="setMode('label')" style="padding:6px 12px;font-size:12px">&#128204; Label</button>
               <button class="btn btn-ghost" id="mode-pan" onclick="setMode('pan')" style="padding:6px 12px;font-size:12px">&#9995; Pan</button>
-              <div style="margin-left:auto;display:flex;gap:8px">
-                <button class="btn btn-ghost" onclick="undoLast()" style="padding:6px 12px;font-size:12px">&#8630; Undo</button>
-                <button class="btn btn-ghost" onclick="clearRack()" style="padding:6px 12px;font-size:12px">&#10006; Clear</button>
+              <div style="margin-left:auto;display:flex;gap:6px">
+                <button class="btn btn-ghost" onclick="undoLast()" style="padding:6px 10px;font-size:12px">&#8630; Undo</button>
+                <button class="btn btn-ghost" onclick="clearRack()" style="padding:6px 10px;font-size:12px">&#10006; Clear</button>
                 <button class="btn btn-outline" onclick="saveRackCapture()" style="padding:6px 12px;font-size:12px">&#10003; Save</button>
                 <button class="btn btn-primary" onclick="downloadRack()" style="padding:6px 12px;font-size:12px">&#8681; Export</button>
               </div>
             </div>
-            <div style="padding:10px 14px;background:rgba(0,183,217,0.04);border-top:1px solid var(--border)">
+            <div style="padding:10px 14px;background:rgba(0,183,217,0.03);border-top:1px solid var(--border)">
               <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                <label style="font-size:11px;color:var(--text2);text-transform:none;letter-spacing:0">Cable color:</label>
+                <span style="font-size:11px;color:var(--text2)">Cable color:</span>
                 <div id="color-picker" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-                <label style="font-size:11px;color:var(--text2);text-transform:none;letter-spacing:0;margin-left:10px">Label:</label>
+                <span style="font-size:11px;color:var(--text2);margin-left:8px">Label:</span>
                 <input type="text" id="cable-label-input" placeholder="e.g. Uplink to Core SW" style="width:180px;padding:5px 10px;font-size:12px">
               </div>
             </div>
           </div>
-
-          <!-- Cable legend + list -->
           <div class="card mt-12">
             <h3 class="sub-heading">&#128305; Traced cables</h3>
             <div id="cable-list-items"></div>
             <button class="btn-dashed mt-12" onclick="document.getElementById('rack-input').click()">&#128247; Replace rack photo</button>
           </div>
-
-          <!-- Additional rack notes -->
           <div class="card mt-12">
             <h3 class="sub-heading">Rack notes</h3>
             <div class="field-grid col2">
@@ -308,7 +356,6 @@
             </div>
           </div>
         </div>
-
         <div class="section-nav">
           <button class="btn btn-ghost" onclick="goToSection('cabling')">&#8249; Cabling</button>
           <button class="btn btn-primary" onclick="goToSection('future-eq')">Next: Planned &#8250;</button>
@@ -423,7 +470,7 @@
   <div class="modal-backdrop" id="qr-modal">
     <div class="modal">
       <div class="modal-header"><h3>&#9707; QR Code</h3><button class="modal-close" onclick="closeModal('qr-modal')">&#10005;</button></div>
-      <div class="field-group" style="margin-bottom:14px;">
+      <div class="field-group" style="margin-bottom:14px">
         <label>URL to encode</label>
         <input type="text" id="qr-url-input" placeholder="http://YOUR-LXC-IP:PORT" oninput="regenerateQR()">
       </div>
@@ -440,6 +487,7 @@
 
 <script src="data.js"></script>
 <script src="bg.js"></script>
+<script src="sensors.js"></script>
 <script src="rack.js"></script>
 <script src="app.js"></script>
 </body>
