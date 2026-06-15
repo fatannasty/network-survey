@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Network Site Survey</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+<div id="app">
+
+  <!-- Sidebar Nav -->
+  <nav id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo"><span class="logo-icon">&#9741;</span><span class="logo-text">NetSurvey</span></div>
+      <button id="sidebar-close" class="icon-btn" aria-label="Close menu">&#10005;</button>
+    </div>
+    <ul class="nav-list">
+      <li><a href="#site-info" class="nav-link active" data-section="site-info"><span class="nav-icon">&#127968;</span> Site Info</a></li>
+      <li><a href="#location" class="nav-link" data-section="location"><span class="nav-icon">&#128205;</span> Location</a></li>
+      <li><a href="#existing-eq" class="nav-link" data-section="existing-eq"><span class="nav-icon">&#128268;</span> Existing Equipment</a></li>
+      <li><a href="#cabling" class="nav-link" data-section="cabling"><span class="nav-icon">&#128305;</span> Cabling</a></li>
+      <li><a href="#future-eq" class="nav-link" data-section="future-eq"><span class="nav-icon">&#43; Planned Equipment</span></a></li>
+      <li><a href="#contacts" class="nav-link" data-section="contacts"><span class="nav-icon">&#128101;</span> Contacts</a></li>
+      <li><a href="#findings" class="nav-link" data-section="findings"><span class="nav-icon">&#128203;</span> Findings</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <button class="btn btn-outline full-width" onclick="newSurvey()">+ New Survey</button>
+    </div>
+  </nav>
+
+  <!-- Overlay for mobile sidebar -->
+  <div id="overlay" onclick="closeSidebar()"></div>
+
+  <!-- Main Content -->
+  <div id="main">
+
+    <!-- Top Bar -->
+    <header id="topbar">
+      <button id="menu-btn" class="icon-btn" aria-label="Open menu">&#9776;</button>
+      <div class="topbar-title">
+        <h1 id="topbar-heading">Network Site Survey</h1>
+        <span id="survey-id-display" class="survey-id-badge"></span>
+      </div>
+      <div class="topbar-actions">
+        <span id="save-status" class="save-status"></span>
+        <button class="btn btn-outline" onclick="exportPDF()">&#8681; Export</button>
+        <button class="btn btn-primary" onclick="saveSurvey()">&#10003; Save</button>
+      </div>
+    </header>
+
+    <!-- Progress Bar -->
+    <div id="progress-bar-wrap">
+      <div id="progress-bar"></div>
+    </div>
+
+    <!-- Sections -->
+    <main id="content">
+
+      <!-- ── SITE INFO ── -->
+      <section id="site-info" class="survey-section active-section">
+        <div class="section-header">
+          <div class="section-icon blue">&#127968;</div>
+          <div>
+            <h2>Site information</h2>
+            <p class="section-sub">Basic details about this survey and site</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="field-grid col2">
+            <div class="field-group">
+              <label>Site name</label>
+              <input type="text" id="site-name" placeholder="e.g. HQ – Floor 3" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>Survey date</label>
+              <input type="date" id="survey-date" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>Surveyed by</label>
+              <input type="text" id="surveyed-by" placeholder="Your name" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>Ticket / Job #</label>
+              <input type="text" id="ticket-num" placeholder="Optional reference" oninput="autoSave()">
+            </div>
+            <div class="field-group col-full">
+              <label>Site address</label>
+              <input type="text" id="site-address" placeholder="Street, city, state, ZIP" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>Floor / Area</label>
+              <input type="text" id="floor-area" placeholder="e.g. Floor 2, East wing" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>Site type</label>
+              <select id="site-type" onchange="autoSave()">
+                <option value="">Select…</option>
+                <option>Office</option><option>Warehouse</option><option>Data center</option>
+                <option>Retail</option><option>Healthcare</option><option>Education</option><option>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="field-grid col2">
+            <div class="field-group">
+              <label>Network status</label>
+              <div class="pill-group" id="status-pills">
+                <button class="pill" data-val="operational" onclick="togglePill(this,'status-pills')">&#9679; Operational</button>
+                <button class="pill" data-val="degraded" onclick="togglePill(this,'status-pills')">&#9679; Degraded</button>
+                <button class="pill" data-val="offline" onclick="togglePill(this,'status-pills')">&#9679; Offline</button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label>Signal strength <span id="signal-label" class="field-hint"></span></label>
+              <div class="signal-row">
+                <button class="signal-bar" onclick="setSignal(1)" aria-label="Signal 1"></button>
+                <button class="signal-bar" onclick="setSignal(2)" aria-label="Signal 2"></button>
+                <button class="signal-bar" onclick="setSignal(3)" aria-label="Signal 3"></button>
+                <button class="signal-bar" onclick="setSignal(4)" aria-label="Signal 4"></button>
+                <button class="signal-bar" onclick="setSignal(5)" aria-label="Signal 5"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="section-nav">
+          <span></span>
+          <button class="btn btn-primary" onclick="goToSection('location')">Next: Location &#8250;</button>
+        </div>
+      </section>
+
+      <!-- ── LOCATION ── -->
+      <section id="location" class="survey-section">
+        <div class="section-header">
+          <div class="section-icon teal">&#128205;</div>
+          <div>
+            <h2>Location &amp; layout</h2>
+            <p class="section-sub">Physical area details and access information</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="field-grid col2">
+            <div class="field-group">
+              <label>Building / Campus</label>
+              <input type="text" id="building" placeholder="e.g. Building A" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>Room / Zone</label>
+              <input type="text" id="room-zone" placeholder="e.g. Server room 104" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>GPS / Coordinates</label>
+              <input type="text" id="gps" placeholder="Optional – lat, long" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>Nearest landmark</label>
+              <input type="text" id="landmark" placeholder="e.g. Near south entrance" oninput="autoSave()">
+            </div>
+            <div class="field-group col-full">
+              <label>Access instructions</label>
+              <input type="text" id="access-instructions" placeholder="e.g. Badge access required, ask reception for key fob" oninput="autoSave()">
+            </div>
+            <div class="field-group col-full">
+              <label>Floor plan / coverage notes</label>
+              <textarea id="floorplan-notes" rows="4" placeholder="Describe the physical area surveyed — walls, obstacles, dead zones, conduit paths, etc." oninput="autoSave()"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="section-nav">
+          <button class="btn btn-outline" onclick="goToSection('site-info')">&#8249; Site Info</button>
+          <button class="btn btn-primary" onclick="goToSection('existing-eq')">Next: Equipment &#8250;</button>
+        </div>
+      </section>
+
+      <!-- ── EXISTING EQUIPMENT ── -->
+      <section id="existing-eq" class="survey-section">
+        <div class="section-header">
+          <div class="section-icon purple">&#128268;</div>
+          <div>
+            <h2>Existing network equipment</h2>
+            <p class="section-sub">Document all currently installed devices</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table id="eq-table">
+              <thead>
+                <tr>
+                  <th>Device / Hostname</th>
+                  <th>Type</th>
+                  <th>Make / Model</th>
+                  <th>IP / MAC</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="eq-tbody"></tbody>
+            </table>
+          </div>
+          <button class="btn btn-dashed full-width mt-12" onclick="addEquipmentRow()">+ Add device</button>
+
+          <div class="divider"></div>
+          <h3 class="sub-heading">Network details</h3>
+          <div class="field-grid col2">
+            <div class="field-group">
+              <label>ISP / Carrier</label>
+              <input type="text" id="isp" placeholder="e.g. Comcast Business" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>Circuit ID</label>
+              <input type="text" id="circuit-id" placeholder="Provided by ISP" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>WAN IP</label>
+              <input type="text" id="wan-ip" placeholder="e.g. 203.0.113.10" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>Bandwidth</label>
+              <input type="text" id="bandwidth" placeholder="e.g. 500 Mbps / 100 Mbps" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>SSID(s)</label>
+              <input type="text" id="ssids" placeholder="e.g. Corp-WiFi, Guest" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>Security protocol</label>
+              <select id="security-proto" onchange="autoSave()">
+                <option value="">Select…</option>
+                <option>WPA3</option><option>WPA2</option><option>WPA</option><option>Open</option><option>802.1X</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>VLAN(s) in use</label>
+              <input type="text" id="vlans" placeholder="e.g. 10, 20, 99" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>DNS server(s)</label>
+              <input type="text" id="dns" placeholder="e.g. 8.8.8.8, 1.1.1.1" oninput="autoSave()">
+            </div>
+          </div>
+        </div>
+        <div class="section-nav">
+          <button class="btn btn-outline" onclick="goToSection('location')">&#8249; Location</button>
+          <button class="btn btn-primary" onclick="goToSection('cabling')">Next: Cabling &#8250;</button>
+        </div>
+      </section>
+
+      <!-- ── CABLING ── -->
+      <section id="cabling" class="survey-section">
+        <div class="section-header">
+          <div class="section-icon amber">&#128305;</div>
+          <div>
+            <h2>Cabling &amp; infrastructure</h2>
+            <p class="section-sub">Physical cabling, ports, and infrastructure details</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="field-grid col3">
+            <div class="field-group">
+              <label>Cable type</label>
+              <select id="cable-type" onchange="autoSave()">
+                <option value="">Select…</option>
+                <option>Cat5e</option><option>Cat6</option><option>Cat6A</option><option>Cat7</option>
+                <option>Fiber (SM)</option><option>Fiber (MM)</option><option>Coax</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>Total ports surveyed</label>
+              <input type="number" id="total-ports" min="0" placeholder="0" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>Active ports</label>
+              <input type="number" id="active-ports" min="0" placeholder="0" oninput="autoSave()">
+            </div>
+          </div>
+          <div class="field-grid col2 mt-12">
+            <div class="field-group">
+              <label>Patch panel location</label>
+              <input type="text" id="patch-panel" placeholder="e.g. Rack A, unit 12" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>MDF / IDF location</label>
+              <input type="text" id="mdf-idf" placeholder="e.g. Basement closet B" oninput="autoSave()">
+            </div>
+            <div class="field-group col-full">
+              <label>Cabling condition / notes</label>
+              <textarea id="cabling-notes" rows="3" placeholder="e.g. Several unlabeled runs near east wall, 2 damaged jacks in room 108" oninput="autoSave()"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="section-nav">
+          <button class="btn btn-outline" onclick="goToSection('existing-eq')">&#8249; Equipment</button>
+          <button class="btn btn-primary" onclick="goToSection('future-eq')">Next: Planned &#8250;</button>
+        </div>
+      </section>
+
+      <!-- ── FUTURE EQUIPMENT ── -->
+      <section id="future-eq" class="survey-section">
+        <div class="section-header">
+          <div class="section-icon green">&#43;</div>
+          <div>
+            <h2>Planned / future equipment</h2>
+            <p class="section-sub">Equipment to be installed — Cisco, Arista, VeloCloud and more</p>
+          </div>
+        </div>
+
+        <!-- Summary chips -->
+        <div class="chip-row">
+          <span class="chip chip-blue" id="chip-cisco">Cisco: 0</span>
+          <span class="chip chip-green" id="chip-arista">Arista / VeloCloud: 0</span>
+          <span class="chip chip-purple" id="chip-other">Other: 0</span>
+        </div>
+
+        <!-- Vendor Selector -->
+        <div class="card vendor-card">
+          <div class="vendor-tabs">
+            <button class="vtab" id="vtab-cisco" onclick="setVendor('cisco')">&#9670; Cisco</button>
+            <button class="vtab" id="vtab-arista" onclick="setVendor('arista')">&#9670; Arista / VeloCloud</button>
+            <button class="vtab" id="vtab-other" onclick="setVendor('other')">+ Other vendor</button>
+          </div>
+          <div id="vendor-form"></div>
+        </div>
+
+        <!-- Added equipment list -->
+        <div id="future-list"></div>
+
+        <!-- Install details -->
+        <div class="card mt-16">
+          <h3 class="sub-heading">Installation details</h3>
+          <div class="field-grid col2">
+            <div class="field-group">
+              <label>Target install date</label>
+              <input type="date" id="install-date" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>Install priority</label>
+              <select id="install-priority" onchange="autoSave()">
+                <option value="">Select…</option>
+                <option>Critical – ASAP</option><option>High – within 30 days</option>
+                <option>Medium – within 90 days</option><option>Low – planned</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>Assigned installer / vendor</label>
+              <input type="text" id="installer" placeholder="Company or technician name" oninput="autoSave()">
+            </div>
+            <div class="field-group">
+              <label>PO / Budget reference</label>
+              <input type="text" id="po-ref" placeholder="Optional purchase order #" oninput="autoSave()">
+            </div>
+            <div class="field-group col-full">
+              <label>Installation notes</label>
+              <textarea id="install-notes" rows="3" placeholder="e.g. Rack space required, power needs, fiber pre-pull needed, staging location" oninput="autoSave()"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-nav">
+          <button class="btn btn-outline" onclick="goToSection('cabling')">&#8249; Cabling</button>
+          <button class="btn btn-primary" onclick="goToSection('contacts')">Next: Contacts &#8250;</button>
+        </div>
+      </section>
+
+      <!-- ── CONTACTS ── -->
+      <section id="contacts" class="survey-section">
+        <div class="section-header">
+          <div class="section-icon coral">&#128101;</div>
+          <div>
+            <h2>Key contacts</h2>
+            <p class="section-sub">Site managers, IT staff, and ISP contacts</p>
+          </div>
+        </div>
+        <div id="contacts-list"></div>
+        <button class="btn btn-dashed full-width" onclick="addContact()">+ Add contact</button>
+        <div class="section-nav">
+          <button class="btn btn-outline" onclick="goToSection('future-eq')">&#8249; Planned</button>
+          <button class="btn btn-primary" onclick="goToSection('findings')">Next: Findings &#8250;</button>
+        </div>
+      </section>
+
+      <!-- ── FINDINGS ── -->
+      <section id="findings" class="survey-section">
+        <div class="section-header">
+          <div class="section-icon blue">&#128203;</div>
+          <div>
+            <h2>Findings &amp; recommendations</h2>
+            <p class="section-sub">Summary of issues, recommendations, and next steps</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="field-grid col1">
+            <div class="field-group">
+              <label>Issues found</label>
+              <textarea id="issues" rows="4" placeholder="List any problems identified during the survey" oninput="autoSave()"></textarea>
+            </div>
+            <div class="field-group">
+              <label>Recommendations</label>
+              <textarea id="recommendations" rows="4" placeholder="e.g. Replace aging switch in IDF-2, add AP to conference room D" oninput="autoSave()"></textarea>
+            </div>
+          </div>
+          <div class="field-grid col2 mt-12">
+            <div class="field-group">
+              <label>Follow-up required?</label>
+              <select id="followup" onchange="autoSave()">
+                <option value="">Select…</option>
+                <option>Yes – urgent</option><option>Yes – scheduled</option><option>No</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>Estimated completion</label>
+              <input type="date" id="est-completion" oninput="autoSave()">
+            </div>
+            <div class="field-group col-full">
+              <label>Additional notes</label>
+              <textarea id="extra-notes" rows="3" placeholder="Anything else relevant to this survey" oninput="autoSave()"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Final actions -->
+        <div class="final-actions card mt-16">
+          <h3 class="sub-heading">Survey complete</h3>
+          <p class="field-hint mb-12">Review your survey, then export or save.</p>
+          <div class="action-row">
+            <button class="btn btn-outline" onclick="exportTXT()">&#8681; Export as text</button>
+            <button class="btn btn-outline" onclick="exportJSON()">&#8681; Export JSON</button>
+            <button class="btn btn-primary" onclick="saveSurvey()">&#10003; Save survey</button>
+          </div>
+        </div>
+
+        <div class="section-nav">
+          <button class="btn btn-outline" onclick="goToSection('contacts')">&#8249; Contacts</button>
+          <span></span>
+        </div>
+      </section>
+
+    </main><!-- /content -->
+  </div><!-- /main -->
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+</div><!-- /app -->
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  netsurvey:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: netsurvey:latest
+    container_name: netsurvey
+    restart: unless-stopped
+    ports:
+      - "8080:80"       # Change 8080 to any port you prefer
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "com.netsurvey.description=Network Site Survey App"
+      - "com.netsurvey.version=1.0.0"
+
+# Optional: Uncomment to add a reverse proxy with Traefik
+# networks:
+#   default:
+#     external: true
+#     name: traefik_proxy
