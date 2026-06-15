@@ -6,34 +6,38 @@
 <title>Amtrak Network Site Survey</title>
 <link rel="stylesheet" href="style.css">
 <link rel="manifest" href="manifest.json">
+<!-- QR Code library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 <div id="app">
 
-  <!-- Sidebar -->
+  <!-- ── Sidebar ── -->
   <nav id="sidebar" aria-label="Survey navigation">
     <div class="sidebar-header">
       <div class="logo">
         <div class="logo-icon">&#9650;</div>
-        <div class="logo-text">
-          <span>NetSurvey</span>
-          <span>Amtrak IT</span>
-        </div>
+        <div class="logo-text"><span>NetSurvey</span><span>Amtrak IT</span></div>
       </div>
       <button id="sidebar-close" aria-label="Close menu">&#10005;</button>
     </div>
-
     <p class="nav-section-label">Survey sections</p>
     <ul class="nav-list">
-      <li><a href="#site-info"  class="nav-link active" data-section="site-info"><span class="nav-icon">&#127968;</span> Site Info <span class="nav-dot"></span></a></li>
-      <li><a href="#location"   class="nav-link" data-section="location"><span class="nav-icon">&#128205;</span> Location <span class="nav-dot"></span></a></li>
-      <li><a href="#existing-eq" class="nav-link" data-section="existing-eq"><span class="nav-icon">&#128268;</span> Existing Equipment <span class="nav-dot"></span></a></li>
-      <li><a href="#cabling"    class="nav-link" data-section="cabling"><span class="nav-icon">&#128305;</span> Cabling <span class="nav-dot"></span></a></li>
-      <li><a href="#future-eq"  class="nav-link" data-section="future-eq"><span class="nav-icon">&#43;</span> Planned Equipment <span class="nav-dot"></span></a></li>
-      <li><a href="#contacts"   class="nav-link" data-section="contacts"><span class="nav-icon">&#128101;</span> Contacts <span class="nav-dot"></span></a></li>
-      <li><a href="#findings"   class="nav-link" data-section="findings"><span class="nav-icon">&#128203;</span> Findings <span class="nav-dot"></span></a></li>
+      <li><a href="#" class="nav-link active" data-section="site-info"><span class="nav-icon">&#127968;</span> Site Info <span class="nav-dot"></span></a></li>
+      <li><a href="#" class="nav-link" data-section="location"><span class="nav-icon">&#128205;</span> Location <span class="nav-dot"></span></a></li>
+      <li><a href="#" class="nav-link" data-section="existing-eq"><span class="nav-icon">&#128268;</span> Existing Equipment <span class="nav-dot"></span></a></li>
+      <li><a href="#" class="nav-link" data-section="cabling"><span class="nav-icon">&#128305;</span> Cabling <span class="nav-dot"></span></a></li>
+      <li><a href="#" class="nav-link" data-section="future-eq"><span class="nav-icon">&#43;</span> Planned Equipment <span class="nav-dot"></span></a></li>
+      <li><a href="#" class="nav-link" data-section="contacts"><span class="nav-icon">&#128101;</span> Contacts <span class="nav-dot"></span></a></li>
+      <li><a href="#" class="nav-link" data-section="findings"><span class="nav-icon">&#128203;</span> Findings <span class="nav-dot"></span></a></li>
     </ul>
-
+    <p class="nav-section-label">Tools</p>
+    <div style="padding:0 10px 10px;">
+      <button class="tool-btn" onclick="openHistory()">&#128193; Survey history</button>
+      <button class="tool-btn" id="dark-mode-btn" onclick="toggleDarkMode()">&#127769; Dark mode</button>
+      <button class="tool-btn" onclick="openQR()">&#9707; QR code</button>
+      <button class="tool-btn" onclick="exportPDF()">&#128438; Print / PDF</button>
+    </div>
     <div class="sidebar-footer">
       <button class="btn-sidebar" onclick="newSurvey()">+ New Survey</button>
     </div>
@@ -41,7 +45,7 @@
 
   <div id="overlay" onclick="closeSidebar()"></div>
 
-  <!-- Main -->
+  <!-- ── Main ── -->
   <div id="main">
     <header id="topbar">
       <button id="menu-btn" aria-label="Open menu">&#9776;</button>
@@ -51,23 +55,28 @@
       </div>
       <div class="topbar-actions">
         <span id="save-status" class="save-status"></span>
+        <button class="btn btn-outline" onclick="openQR()">&#9707; QR</button>
         <button class="btn btn-outline" onclick="exportPDF()">&#8681; Export</button>
         <button class="btn btn-primary" onclick="saveSurvey()">&#10003; Save</button>
       </div>
     </header>
-
     <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 
     <main id="content">
+      <!-- Print letterhead (visible only when printing) -->
+      <div class="print-header">
+        <div>
+          <div class="print-header-logo">&#9650; AMTRAK</div>
+          <div class="print-header-sub">Network Site Survey — IT Infrastructure</div>
+        </div>
+        <div class="print-header-date" id="print-date"></div>
+      </div>
 
-      <!-- SITE INFO -->
+      <!-- ── SITE INFO ── -->
       <section id="site-info" class="survey-section active-section">
         <div class="section-header">
           <div class="section-icon blue">&#127968;</div>
-          <div>
-            <h2>Site information</h2>
-            <p class="section-sub">Basic details about this survey and the Amtrak site location</p>
-          </div>
+          <div><h2>Site information</h2><p class="section-sub">Basic details about this survey and the Amtrak site</p></div>
         </div>
         <div class="card card-accent">
           <div class="field-grid col2">
@@ -99,22 +108,19 @@
             <div class="field-group">
               <label>Signal strength <span id="signal-label" class="field-hint"></span></label>
               <div class="signal-row">
-                <button class="signal-bar" onclick="setSignal(1)" aria-label="Signal 1 of 5"></button>
-                <button class="signal-bar" onclick="setSignal(2)" aria-label="Signal 2 of 5"></button>
-                <button class="signal-bar" onclick="setSignal(3)" aria-label="Signal 3 of 5"></button>
-                <button class="signal-bar" onclick="setSignal(4)" aria-label="Signal 4 of 5"></button>
-                <button class="signal-bar" onclick="setSignal(5)" aria-label="Signal 5 of 5"></button>
+                <button class="signal-bar" onclick="setSignal(1)" aria-label="1"></button>
+                <button class="signal-bar" onclick="setSignal(2)" aria-label="2"></button>
+                <button class="signal-bar" onclick="setSignal(3)" aria-label="3"></button>
+                <button class="signal-bar" onclick="setSignal(4)" aria-label="4"></button>
+                <button class="signal-bar" onclick="setSignal(5)" aria-label="5"></button>
               </div>
             </div>
           </div>
         </div>
-        <div class="section-nav">
-          <span></span>
-          <button class="btn btn-primary" onclick="goToSection('location')">Next: Location &#8250;</button>
-        </div>
+        <div class="section-nav"><span></span><button class="btn btn-primary" onclick="goToSection('location')">Next: Location &#8250;</button></div>
       </section>
 
-      <!-- LOCATION -->
+      <!-- ── LOCATION ── -->
       <section id="location" class="survey-section">
         <div class="section-header">
           <div class="section-icon teal">&#128205;</div>
@@ -126,9 +132,20 @@
             <div class="field-group"><label>Room / Zone</label><input type="text" id="room-zone" placeholder="e.g. Server room 104" oninput="autoSave()"></div>
             <div class="field-group"><label>GPS / Coordinates</label><input type="text" id="gps" placeholder="Optional – lat, long" oninput="autoSave()"></div>
             <div class="field-group"><label>Nearest landmark</label><input type="text" id="landmark" placeholder="e.g. Near south entrance" oninput="autoSave()"></div>
-            <div class="field-group col-full"><label>Access instructions</label><input type="text" id="access-instructions" placeholder="e.g. Badge access required, ask operations desk for key fob" oninput="autoSave()"></div>
+            <div class="field-group col-full"><label>Access instructions</label><input type="text" id="access-instructions" placeholder="e.g. Badge access required, ask operations desk" oninput="autoSave()"></div>
             <div class="field-group col-full"><label>Floor plan / coverage notes</label><textarea id="floorplan-notes" rows="4" placeholder="Describe the physical area — walls, obstacles, dead zones, conduit paths, etc." oninput="autoSave()"></textarea></div>
           </div>
+        </div>
+        <!-- Photo upload -->
+        <div class="card">
+          <h3 class="sub-heading">&#128247; Site photos</h3>
+          <p class="field-hint mb-12">Upload photos of the location, equipment rooms, or any relevant areas.</p>
+          <div class="photo-grid" id="photo-grid">
+            <div class="photo-upload-btn" onclick="document.getElementById('photo-input').click()">
+              <span>&#128247;</span>Add photo
+            </div>
+          </div>
+          <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotoUpload(this)">
         </div>
         <div class="section-nav">
           <button class="btn btn-outline-dark" onclick="goToSection('site-info')">&#8249; Site Info</button>
@@ -136,7 +153,7 @@
         </div>
       </section>
 
-      <!-- EXISTING EQUIPMENT -->
+      <!-- ── EXISTING EQUIPMENT ── -->
       <section id="existing-eq" class="survey-section">
         <div class="section-header">
           <div class="section-icon purple">&#128268;</div>
@@ -144,12 +161,8 @@
         </div>
         <div class="card">
           <div class="table-wrap">
-            <table id="eq-table">
-              <thead><tr>
-                <th>Device / Hostname</th><th>Type</th><th>Make / Model</th><th>IP / MAC</th><th></th>
-              </tr></thead>
-              <tbody id="eq-tbody"></tbody>
-            </table>
+            <table><thead><tr><th>Device / Hostname</th><th>Type</th><th>Make / Model</th><th>IP / MAC</th><th>Photo</th><th></th></tr></thead>
+            <tbody id="eq-tbody"></tbody></table>
           </div>
           <button class="btn-dashed mt-12" onclick="addEquipmentRow()">+ Add device</button>
           <div class="divider"></div>
@@ -175,7 +188,7 @@
         </div>
       </section>
 
-      <!-- CABLING -->
+      <!-- ── CABLING ── -->
       <section id="cabling" class="survey-section">
         <div class="section-header">
           <div class="section-icon amber">&#128305;</div>
@@ -194,7 +207,7 @@
           <div class="field-grid col2 mt-12">
             <div class="field-group"><label>Patch panel location</label><input type="text" id="patch-panel" placeholder="e.g. Rack A, unit 12" oninput="autoSave()"></div>
             <div class="field-group"><label>MDF / IDF location</label><input type="text" id="mdf-idf" placeholder="e.g. Basement closet B" oninput="autoSave()"></div>
-            <div class="field-group col-full"><label>Cabling condition / notes</label><textarea id="cabling-notes" rows="3" placeholder="e.g. Several unlabeled runs near east wall, 2 damaged jacks in room 108" oninput="autoSave()"></textarea></div>
+            <div class="field-group col-full"><label>Cabling condition / notes</label><textarea id="cabling-notes" rows="3" placeholder="e.g. Several unlabeled runs near east wall" oninput="autoSave()"></textarea></div>
           </div>
         </div>
         <div class="section-nav">
@@ -203,22 +216,22 @@
         </div>
       </section>
 
-      <!-- FUTURE EQUIPMENT -->
+      <!-- ── FUTURE EQUIPMENT ── -->
       <section id="future-eq" class="survey-section">
         <div class="section-header">
           <div class="section-icon green">&#43;</div>
           <div><h2>Planned / future equipment</h2><p class="section-sub">Equipment to be installed — Cisco, Arista, VeloCloud and more</p></div>
         </div>
         <div class="chip-row">
-          <span class="chip chip-blue"   id="chip-cisco">Cisco: 0</span>
-          <span class="chip chip-green"  id="chip-arista">Arista / VeloCloud: 0</span>
+          <span class="chip chip-blue" id="chip-cisco">Cisco: 0</span>
+          <span class="chip chip-green" id="chip-arista">Arista / VeloCloud: 0</span>
           <span class="chip chip-purple" id="chip-other">Other: 0</span>
         </div>
         <div class="card vendor-card">
           <div class="vendor-tabs">
-            <button class="vtab" id="vtab-cisco"  onclick="setVendor('cisco')">&#9670; Cisco</button>
+            <button class="vtab" id="vtab-cisco" onclick="setVendor('cisco')">&#9670; Cisco</button>
             <button class="vtab" id="vtab-arista" onclick="setVendor('arista')">&#9670; Arista / VeloCloud</button>
-            <button class="vtab" id="vtab-other"  onclick="setVendor('other')">+ Other vendor</button>
+            <button class="vtab" id="vtab-other" onclick="setVendor('other')">+ Other vendor</button>
           </div>
           <div id="vendor-form"></div>
         </div>
@@ -234,7 +247,7 @@
             </div>
             <div class="field-group"><label>Assigned installer / vendor</label><input type="text" id="installer" placeholder="Company or technician name" oninput="autoSave()"></div>
             <div class="field-group"><label>PO / Budget reference</label><input type="text" id="po-ref" placeholder="Optional purchase order #" oninput="autoSave()"></div>
-            <div class="field-group col-full"><label>Installation notes</label><textarea id="install-notes" rows="3" placeholder="e.g. Rack space required, power needs, fiber pre-pull needed, staging location" oninput="autoSave()"></textarea></div>
+            <div class="field-group col-full"><label>Installation notes</label><textarea id="install-notes" rows="3" placeholder="e.g. Rack space required, power needs, fiber pre-pull needed" oninput="autoSave()"></textarea></div>
           </div>
         </div>
         <div class="section-nav">
@@ -243,7 +256,7 @@
         </div>
       </section>
 
-      <!-- CONTACTS -->
+      <!-- ── CONTACTS ── -->
       <section id="contacts" class="survey-section">
         <div class="section-header">
           <div class="section-icon coral">&#128101;</div>
@@ -257,7 +270,7 @@
         </div>
       </section>
 
-      <!-- FINDINGS -->
+      <!-- ── FINDINGS ── -->
       <section id="findings" class="survey-section">
         <div class="section-header">
           <div class="section-icon blue">&#128203;</div>
@@ -280,11 +293,13 @@
         </div>
         <div class="card mt-16 final-actions">
           <h3 class="sub-heading">Survey complete</h3>
-          <p class="field-hint mb-12">Review your survey then export or save a copy.</p>
+          <p class="field-hint mb-12">Export, print, or share your completed survey.</p>
           <div class="action-row">
-            <button class="btn btn-outline-dark" onclick="exportTXT()">&#8681; Export as text</button>
-            <button class="btn btn-outline-dark" onclick="exportJSON()">&#8681; Export JSON</button>
-            <button class="btn btn-primary" onclick="saveSurvey()">&#10003; Save survey</button>
+            <button class="btn btn-outline-dark" onclick="exportTXT()">&#8681; Text</button>
+            <button class="btn btn-outline-dark" onclick="exportJSON()">&#8681; JSON</button>
+            <button class="btn btn-outline-dark" onclick="openQR()">&#9707; QR Code</button>
+            <button class="btn btn-outline-dark" onclick="exportPDF()">&#128438; Print / PDF</button>
+            <button class="btn btn-primary" onclick="saveSurvey()">&#10003; Save</button>
           </div>
         </div>
         <div class="section-nav">
@@ -292,8 +307,40 @@
           <span></span>
         </div>
       </section>
-
     </main>
+  </div>
+
+  <!-- ── HISTORY MODAL ── -->
+  <div class="modal-backdrop" id="history-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>&#128193; Survey history</h3>
+        <button class="modal-close" onclick="closeModal('history-modal')">&#10005;</button>
+      </div>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- ── QR MODAL ── -->
+  <div class="modal-backdrop" id="qr-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>&#9707; QR Code</h3>
+        <button class="modal-close" onclick="closeModal('qr-modal')">&#10005;</button>
+      </div>
+      <div class="field-group" style="margin-bottom:14px;">
+        <label>URL to encode</label>
+        <input type="text" id="qr-url-input" placeholder="http://YOUR-LXC-IP:PORT" oninput="regenerateQR()">
+      </div>
+      <div class="qr-container">
+        <div id="qr-code"></div>
+        <p class="qr-url" id="qr-url-display"></p>
+      </div>
+      <div class="qr-actions">
+        <button class="btn btn-outline-dark" onclick="downloadQR()">&#8681; Download QR</button>
+        <button class="btn btn-primary" onclick="copyQRUrl()">&#128203; Copy URL</button>
+      </div>
+    </div>
   </div>
 
   <div id="toast"></div>
