@@ -411,3 +411,126 @@ tbody td input,tbody td select{padding:7px 10px;font-size:12px}
 .network-speed { font-size:11px; color:var(--text3); margin-top:1px; }
 .network-refresh { margin-left:auto; padding:4px 10px; font-size:11px; cursor:pointer; background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--text2); font-family:inherit; transition:all 0.15s; }
 .network-refresh:hover { border-color:var(--cyan); color:var(--cyan); }
+
+/* ── Switch Port Mapper ── */
+.mapper-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 14px;
+  min-height: 700px;
+}
+.mapper-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mapper-panel {
+  background: rgba(0,8,20,0.6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  backdrop-filter: blur(12px);
+}
+.mapper-panel h4 {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cyan);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: 10px;
+}
+.mapper-sw-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  margin-bottom: 6px;
+  transition: all 0.15s;
+  background: rgba(0,183,217,0.02);
+}
+.mapper-sw-item:hover { border-color: var(--border2); background: rgba(0,183,217,0.06); }
+.mapper-sw-item.active { border-color: var(--cyan); background: rgba(0,183,217,0.10); }
+.mapper-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+#mapper-canvas-wrap {
+  background: rgba(0,4,14,0.8);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  cursor: default;
+  min-height: 420px;
+  backdrop-filter: blur(12px);
+}
+#mapper-canvas {
+  display: block;
+  cursor: crosshair;
+  touch-action: none;
+}
+.mapper-canvas-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(0,8,20,0.7);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.cable-type-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.cable-type-btn:hover { border-color: var(--border2); color: var(--text); }
+.cable-type-btn.active { font-weight: 700; }
+.cable-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.mapper-hint {
+  font-size: 11px;
+  color: var(--text3);
+  padding: 8px 14px;
+  background: rgba(0,183,217,0.04);
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+#mapper-port-detail {
+  overflow-x: auto;
+}
+.mapper-legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+}
+.mapper-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--text3);
+}
+.mapper-legend-swatch {
+  width: 20px;
+  height: 3px;
+  border-radius: 2px;
+}
+@media (max-width: 800px) {
+  .mapper-layout { grid-template-columns: 1fr; }
+  #mapper-canvas-wrap { min-height: 300px; }
+}

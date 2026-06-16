@@ -39,6 +39,7 @@
       <li><a href="#" class="nav-link" data-section="existing-eq"><span class="nav-icon">&#128268;</span> Existing Equipment <span class="nav-dot"></span></a></li>
       <li><a href="#" class="nav-link" data-section="cabling"><span class="nav-icon">&#128305;</span> Cabling <span class="nav-dot"></span></a></li>
       <li><a href="#" class="nav-link" data-section="rack-capture"><span class="nav-icon">&#128247;</span> Rack Capture <span class="nav-dot"></span></a></li>
+      <li><a href="#" class="nav-link" data-section="switch-mapper"><span class="nav-icon">&#128268;</span> Switch Port Map <span class="nav-dot"></span></a></li>
       <li><a href="#" class="nav-link" data-section="future-eq"><span class="nav-icon">&#43;</span> Planned Equipment <span class="nav-dot"></span></a></li>
       <li><a href="#" class="nav-link" data-section="contacts"><span class="nav-icon">&#128101;</span> Contacts <span class="nav-dot"></span></a></li>
       <li><a href="#" class="nav-link" data-section="findings"><span class="nav-icon">&#128203;</span> Findings <span class="nav-dot"></span></a></li>
@@ -358,6 +359,101 @@
         </div>
         <div class="section-nav">
           <button class="btn btn-ghost" onclick="goToSection('cabling')">&#8249; Cabling</button>
+          <button class="btn btn-primary" onclick="goToSection('switch-mapper')">Next: Switch Map &#8250;</button>
+        </div>
+      </section>
+
+      <!-- ── SWITCH PORT MAPPER ── -->
+      <section id="switch-mapper" class="survey-section">
+        <div class="section-badge">&#128268; Interactive Port Mapping</div>
+        <div class="section-header">
+          <div class="section-icon">&#128268;</div>
+          <div><h2>Switch port mapper</h2><p class="section-sub">Add Cisco switches, then drag cable interfaces between ports to document your topology</p></div>
+        </div>
+
+        <!-- Add switch controls -->
+        <div class="card card-glow" style="margin-bottom:14px">
+          <h3 class="sub-heading">Add a switch</h3>
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+            <div class="field-group" style="flex:1;min-width:220px">
+              <label>Switch model</label>
+              <select id="switch-model-select" style="width:100%">
+                <option value="">Choose a switch model…</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="addSwitchFromSelect()" style="flex-shrink:0">+ Add to map</button>
+          </div>
+          <!-- Cable type selector -->
+          <div style="margin-top:12px">
+            <label style="display:block;margin-bottom:8px">Active cable type (used when dragging)</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="cable-type-btns"></div>
+          </div>
+          <!-- Legend -->
+          <div class="mapper-legend" style="margin-top:10px">
+            <div class="mapper-legend-item"><div style="width:12px;height:12px;border-radius:2px;background:rgba(0,183,217,0.4);border:1px solid #00B7D9;flex-shrink:0"></div> Cabled port</div>
+            <div class="mapper-legend-item"><div style="width:12px;height:12px;border-radius:2px;background:rgba(74,222,128,0.3);border:1px solid #4ADE80;flex-shrink:0"></div> Device labeled</div>
+            <div class="mapper-legend-item"><div style="width:12px;height:12px;border-radius:2px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);flex-shrink:0"></div> Empty port</div>
+            <div class="mapper-legend-item"><div style="width:20px;height:3px;background:#FF6B6B;border-radius:2px;flex-shrink:0"></div> PoE active</div>
+          </div>
+        </div>
+
+        <div class="mapper-layout">
+          <!-- Left sidebar: switch list -->
+          <div class="mapper-sidebar">
+            <div class="mapper-panel">
+              <h4>&#128268; Switches on site</h4>
+              <div id="mapper-switch-list">
+                <p style="color:var(--text3);font-size:12px">No switches added yet.</p>
+              </div>
+            </div>
+            <div class="mapper-panel">
+              <h4>&#128305; Cables</h4>
+              <div id="mapper-cable-summary" style="font-size:12px;color:var(--text3)">No cables yet.</div>
+              <button class="btn btn-ghost" style="width:100%;margin-top:10px;font-size:12px;padding:6px" onclick="clearAllCables()">&#10006; Clear all cables</button>
+            </div>
+          </div>
+
+          <!-- Right: canvas + port detail -->
+          <div class="mapper-main">
+            <!-- Canvas -->
+            <div>
+              <div class="mapper-canvas-toolbar">
+                <span style="font-size:11px;color:var(--text2)">&#9998; Drag between ports to connect · Drag switch body to reposition</span>
+                <div style="margin-left:auto;display:flex;gap:6px">
+                  <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="clearAllCables()">Clear cables</button>
+                  <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="SwitchMapper.exportCSV()">&#8681; CSV</button>
+                  <button class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="saveMapperToSurvey()">&#10003; Save map</button>
+                </div>
+              </div>
+              <div id="mapper-canvas-wrap">
+                <div style="display:flex;align-items:center;justify-content:center;height:420px;color:var(--text3);font-size:13px;flex-direction:column;gap:8px">
+                  <span style="font-size:32px">&#128268;</span>
+                  Add switches above to start mapping
+                </div>
+              </div>
+              <div class="mapper-hint">
+                Tip: Select a cable type, then click and drag from one port to another to connect them. Drag to empty space to label a cable going to an external device.
+              </div>
+            </div>
+
+            <!-- Port detail table -->
+            <div class="card" style="padding:16px">
+              <h3 class="sub-heading" style="margin-bottom:10px">&#9776; Port details — <span id="selected-sw-name" style="color:var(--text2);font-weight:400;text-transform:none;letter-spacing:0">select a switch above</span></h3>
+              <div id="mapper-port-detail">
+                <p style="color:var(--text3);font-size:12px">Select a switch to view and edit port details.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:10px;padding:10px 14px;background:rgba(0,183,217,0.04);border:1px solid var(--border);border-radius:var(--radius);font-size:11px;color:var(--text3)">
+          <strong style="color:var(--cyan)">Supported models:</strong>
+          Catalyst 9200 (24P/48P/24T/48T), 9200L (24P-4G, 48P-4X), 9300 (24P/48P/24U/48U/48UXM), 9300X (24HX),
+          IE-3300 Industrial (8P2S, 8T2S, 8P2S-A, 16P2S, 16T2S)
+        </div>
+
+        <div class="section-nav">
+          <button class="btn btn-ghost" onclick="goToSection('rack-capture')">&#8249; Rack Capture</button>
           <button class="btn btn-primary" onclick="goToSection('future-eq')">Next: Planned &#8250;</button>
         </div>
       </section>
@@ -489,6 +585,7 @@
 <script src="bg.js"></script>
 <script src="sensors.js"></script>
 <script src="rack.js"></script>
+<script src="switch-mapper.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
