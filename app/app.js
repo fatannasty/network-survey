@@ -17,15 +17,16 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('sidebar-close').addEventListener('click',closeSidebar);
   document.getElementById('qr-url-input').value=window.location.origin||'http://localhost:8080';
   if(window.initRack)initRack();
-  // Switch mapper — init after a tick so switch-mapper.js globals are ready
+  // Equipment mapper — init after short delay so DOM and switch-mapper.js are fully ready
   setTimeout(()=>{
     if(window.SwitchMapper){
-      SwitchMapper.init();
+      SwitchMapper.init();  // sets up device selector + cable type btns
       buildCableTypeBtns();
       loadMapperFromSurvey();
       updateCableSummary();
+      // Canvas will render properly when user navigates to existing-eq
     }
-  }, 50);
+  }, 100);
   // Start sensors
   initSensors();
 });
@@ -168,6 +169,8 @@ function goToSection(sectionId){
   window.scrollTo({top:0,behavior:'smooth'});
   updateProgress();
   if(window._setBgScene)window._setBgScene(sectionId);
+  // Re-render mapper canvas when section becomes visible
+  if(sectionId==='existing-eq' && window.onMapperSectionVisible) onMapperSectionVisible();
 }
 
 function updateProgress(){
@@ -397,6 +400,9 @@ window.addDeviceFromSelect = window.addDeviceFromSelect || function() {
   const [model, cat] = sel.value.split('|');
   SwitchMapper.addDevice(cat, model);
   sel.value = '';
+  // Hide empty hint
+  const hint = document.getElementById('mapper-empty-hint');
+  if (hint) hint.style.display = 'none';
   updateCableSummary();
 };
 

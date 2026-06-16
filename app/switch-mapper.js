@@ -271,7 +271,9 @@ let mapperNextId = 1;
 window.SwitchMapper = {
   init() {
     renderDeviceSelector();
-    renderMapper();
+    // Don't call renderMapper here — section is hidden on load.
+    // Canvas renders when user navigates to existing-eq via onMapperSectionVisible()
+    renderDeviceList();
   },
 
   addDevice(category, modelName, customLabel) {
@@ -300,6 +302,8 @@ window.SwitchMapper = {
     renderMapper();
     renderDeviceList();
     renderDeviceDetail();
+    const el = document.getElementById('selected-sw-name');
+    if (el) el.textContent = dev.hostname || dev.model;
     return dev;
   },
 
@@ -483,26 +487,31 @@ window.selectDevice = function(id) {
 function renderMapper() {
   const wrap = document.getElementById('mapper-canvas-wrap');
   if (!wrap) return;
+
+  // Hide empty hint if devices exist
+  const hint = document.getElementById('mapper-empty-hint');
+  if (hint) hint.style.display = mapperState.devices.length ? 'none' : 'flex';
+
+  // Create or reuse canvas
   let canvas = document.getElementById('mapper-canvas');
   if (!canvas) {
     canvas = document.createElement('canvas');
     canvas.id = 'mapper-canvas';
-    wrap.innerHTML = '';
+    canvas.style.display = 'block';
+    canvas.style.touchAction = 'none';
     wrap.appendChild(canvas);
   }
-  resizeCanvas();
+
+  // Resize — use offsetWidth of parent; if zero (section hidden), use fallback
+  const W = wrap.offsetWidth  || 860;
+  const H = Math.max(wrap.offsetHeight || 0, 560);
+  canvas.width  = W;
+  canvas.height = H;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+
   setupCanvasEvents(canvas);
   drawCanvas();
-}
-
-function resizeCanvas() {
-  const wrap   = document.getElementById('mapper-canvas-wrap');
-  const canvas = document.getElementById('mapper-canvas');
-  if (!wrap || !canvas) return;
-  canvas.width  = wrap.offsetWidth  || 900;
-  canvas.height = Math.max(wrap.offsetHeight || 580, 580);
-  canvas.style.width  = canvas.width  + 'px';
-  canvas.style.height = canvas.height + 'px';
 }
 
 // Device bounding box
@@ -982,4 +991,18 @@ window.loadMapperFromSurvey=function(){
 
 function showMapperToast(msg){ if(window.showToast)showToast(msg); }
 function dl(content,filename,mime){ const b=new Blob([content],{type:mime}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=filename; a.click(); URL.revokeObjectURL(a.href); }
-window.addEventListener('resize',()=>{ resizeCanvas(); drawCanvas(); });
+
+window.addEventListener('resize',()=>{
+  const canvas = document.getElementById('mapper-canvas');
+  const wrap   = document.getElementById('mapper-canvas-wrap');
+  if (!canvas || !wrap) return;
+  const W = wrap.offsetWidth || 860;
+  canvas.width = W; canvas.style.width = W + 'px';
+  drawCanvas();
+});
+
+// Re-render canvas when existing-eq section becomes visible
+// (called from app.js goToSection)
+window.onMapperSectionVisible = function() {
+  setTimeout(() => { renderMapper(); }, 80);
+};
