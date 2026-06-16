@@ -16,17 +16,25 @@
   <nav id="sidebar" aria-label="Survey navigation">
     <div class="sidebar-top-line"></div>
     <div class="sidebar-header">
-      <!-- Real Amtrak logo: speed lines + wordmark -->
-      <div class="amtrak-logo-svg">
-        <svg class="amtrak-speed-lines" width="38" height="44" viewBox="0 0 38 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Three curved speed lines matching real Amtrak logo -->
-          <path d="M2 40 C6 28 12 14 26 8 C20 16 17 26 18 36 C16 38 10 40 2 40Z" fill="#00B7D9"/>
-          <path d="M10 40 C14 28 20 14 34 6 C28 15 25 26 26 38 C23 39 17 40 10 40Z" fill="#0094B3"/>
-          <path d="M19 40 C23 28 29 13 38 5 C34 15 32 27 34 40 Z" fill="#007A94"/>
-        </svg>
-        <div style="display:flex;flex-direction:column;margin-left:4px">
-          <span class="amtrak-wordmark">AMTRAK</span>
-          <span class="logo-sub-line">Network Survey</span>
+      <div class="ns-logo">
+        <div class="ns-logo-icon">
+          <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+            <rect width="34" height="34" rx="9" fill="url(#nsgrad)"/>
+            <rect x="6" y="10" width="22" height="3" rx="1.5" fill="white" opacity="0.9"/>
+            <rect x="6" y="15.5" width="16" height="3" rx="1.5" fill="white" opacity="0.7"/>
+            <rect x="6" y="21" width="10" height="3" rx="1.5" fill="white" opacity="0.5"/>
+            <circle cx="25" cy="22.5" r="4" fill="#00B7D9" opacity="0.9"/>
+            <defs>
+              <linearGradient id="nsgrad" x1="0" y1="0" x2="34" y2="34">
+                <stop offset="0%" stop-color="#003A5D"/>
+                <stop offset="100%" stop-color="#001E3C"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="ns-logo-text">
+          <span class="ns-name">NetSurvey</span>
+          <span class="ns-sub">IT Field Tool</span>
         </div>
       </div>
       <button id="sidebar-close" aria-label="Close">&#10005;</button>
@@ -37,7 +45,6 @@
       <li><a href="#" class="nav-link active" data-section="site-info"><span class="nav-icon">&#127968;</span> Site Info <span class="nav-dot"></span></a></li>
       <li><a href="#" class="nav-link" data-section="location"><span class="nav-icon">&#128205;</span> Location <span class="nav-dot"></span></a></li>
       <li><a href="#" class="nav-link" data-section="existing-eq"><span class="nav-icon">&#128268;</span> Existing Equipment <span class="nav-dot"></span></a></li>
-      <li><a href="#" class="nav-link" data-section="cabling"><span class="nav-icon">&#128305;</span> Cabling <span class="nav-dot"></span></a></li>
       <li><a href="#" class="nav-link" data-section="rack-capture"><span class="nav-icon">&#128247;</span> Rack Capture <span class="nav-dot"></span></a></li>
       <li><a href="#" class="nav-link" data-section="future-eq"><span class="nav-icon">&#43;</span> Planned Equipment <span class="nav-dot"></span></a></li>
       <li><a href="#" class="nav-link" data-section="contacts"><span class="nav-icon">&#128101;</span> Contacts <span class="nav-dot"></span></a></li>
@@ -318,7 +325,7 @@
             <div class="field-group"><label>Circuit ID</label><input type="text" id="circuit-id" placeholder="Provided by ISP" oninput="autoSave()"></div>
             <div class="field-group"><label>WAN IP</label><input type="text" id="wan-ip" placeholder="e.g. 203.0.113.10" oninput="autoSave()"></div>
             <div class="field-group"><label>Bandwidth</label><input type="text" id="bandwidth" placeholder="e.g. 500 Mbps / 100 Mbps" oninput="autoSave()"></div>
-            <div class="field-group"><label>SSID(s)</label><input type="text" id="ssids" placeholder="e.g. Amtrak-Corp, Amtrak-Guest" oninput="autoSave()"></div>
+            <div class="field-group"><label>SSID(s)</label><input type="text" id="ssids" placeholder="e.g. Corp-WiFi, Guest" oninput="autoSave()"></div>
             <div class="field-group"><label>Security protocol</label>
               <select id="security-proto" onchange="autoSave()">
                 <option value="">Select…</option><option>WPA3</option><option>WPA2</option><option>WPA</option><option>Open</option><option>802.1X</option>
@@ -329,41 +336,70 @@
           </div>
         </div>
 
+        <!-- ── RACK STENCIL ── -->
+        <div class="card card-glow" style="margin-top:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+            <h3 class="sub-heading" style="margin-bottom:0">&#129681; Rack stencil — drag &amp; drop layout</h3>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <div class="field-group" style="flex-direction:row;align-items:center;gap:8px">
+                <label style="white-space:nowrap">Rack size (U):</label>
+                <select id="rack-size-select" onchange="buildRackStencil()" style="width:80px;padding:5px 8px;font-size:12px">
+                  <option value="12">12U</option>
+                  <option value="24">24U</option>
+                  <option value="42" selected>42U</option>
+                  <option value="48">48U</option>
+                </select>
+              </div>
+              <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="clearRackStencil()">&#10006; Clear rack</button>
+              <button class="btn btn-outline" style="font-size:11px;padding:6px 12px" onclick="exportRackStencil()">&#8681; Export rack</button>
+            </div>
+          </div>
+
+          <div class="rack-stencil-wrap">
+            <!-- Rack visual -->
+            <div id="rack-stencil-visual">
+              <!-- built by JS -->
+            </div>
+
+            <!-- Add-to-rack panel -->
+            <div class="rack-stencil-panel">
+              <div class="rack-add-panel">
+                <h4>&#43; Add to rack</h4>
+                <!-- Category tabs -->
+                <div class="rack-tabs" id="rack-cat-tabs"></div>
+                <div class="field-group" style="margin-bottom:10px">
+                  <label>Device / model</label>
+                  <select id="rack-model-select" style="width:100%"><option value="">Choose…</option></select>
+                </div>
+                <div class="field-grid col2" style="margin-bottom:10px;gap:8px">
+                  <div class="field-group">
+                    <label>Hostname / label</label>
+                    <input type="text" id="rack-add-label" placeholder="e.g. SW-CORE-01">
+                  </div>
+                  <div class="field-group">
+                    <label>Start at unit (U)</label>
+                    <input type="number" id="rack-add-unit" min="1" value="1" style="width:100%">
+                  </div>
+                </div>
+                <button class="btn btn-primary full-width" onclick="addToRackStencil()">+ Place in rack</button>
+              </div>
+
+              <!-- Installed list -->
+              <div class="rack-add-panel">
+                <h4>&#128268; Installed equipment</h4>
+                <div id="rack-installed-list" style="font-size:12px;color:var(--text3)">Rack is empty.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="section-nav">
           <button class="btn btn-ghost" onclick="goToSection('location')">&#8249; Location</button>
-          <button class="btn btn-primary" onclick="goToSection('cabling')">Next: Cabling &#8250;</button>
-        </div>
-      </section>
-
-      <!-- ── CABLING ── -->
-      <section id="cabling" class="survey-section">
-        <div class="section-badge">&#128305; Cabling &amp; Infrastructure</div>
-        <div class="section-header">
-          <div class="section-icon">&#128305;</div>
-          <div><h2>Cabling &amp; infrastructure</h2><p class="section-sub">Physical cabling, ports, and infrastructure details</p></div>
-        </div>
-        <div class="card card-glow">
-          <div class="field-grid col3">
-            <div class="field-group"><label>Cable type</label>
-              <select id="cable-type" onchange="autoSave()">
-                <option value="">Select…</option><option>Cat5e</option><option>Cat6</option><option>Cat6A</option><option>Cat7</option><option>Fiber (SM)</option><option>Fiber (MM)</option><option>Coax</option>
-              </select>
-            </div>
-            <div class="field-group"><label>Total ports surveyed</label><input type="number" id="total-ports" min="0" placeholder="0" oninput="autoSave()"></div>
-            <div class="field-group"><label>Active ports</label><input type="number" id="active-ports" min="0" placeholder="0" oninput="autoSave()"></div>
-          </div>
-          <div class="field-grid col2 mt-12">
-            <div class="field-group"><label>Patch panel location</label><input type="text" id="patch-panel" placeholder="e.g. Rack A, unit 12" oninput="autoSave()"></div>
-            <div class="field-group"><label>MDF / IDF location</label><input type="text" id="mdf-idf" placeholder="e.g. Basement closet B" oninput="autoSave()"></div>
-            <div class="field-group col-full"><label>Cabling condition / notes</label><textarea id="cabling-notes" rows="3" placeholder="e.g. Several unlabeled runs near east wall" oninput="autoSave()"></textarea></div>
-          </div>
-        </div>
-        <div class="section-nav">
-          <button class="btn btn-ghost" onclick="goToSection('existing-eq')">&#8249; Equipment</button>
           <button class="btn btn-primary" onclick="goToSection('rack-capture')">Next: Rack Capture &#8250;</button>
         </div>
       </section>
 
+      <!-- ── CABLING ── -->
       <!-- ── RACK CAPTURE ── -->
       <section id="rack-capture" class="survey-section">
         <div class="section-badge">&#128247; Visual Rack Documentation</div>
@@ -425,7 +461,7 @@
           </div>
         </div>
         <div class="section-nav">
-          <button class="btn btn-ghost" onclick="goToSection('cabling')">&#8249; Cabling</button>
+          <button class="btn btn-ghost" onclick="goToSection('existing-eq')">&#8249; Equipment</button>
           <button class="btn btn-primary" onclick="goToSection('switch-mapper')">Next: Switch Map &#8250;</button>
         </div>
       </section>
@@ -558,6 +594,7 @@
 <script src="bg.js"></script>
 <script src="sensors.js"></script>
 <script src="rack.js"></script>
+<script src="rack-stencil.js"></script>
 <script src="switch-mapper.js"></script>
 <script src="app.js"></script>
 </body>

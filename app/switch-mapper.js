@@ -39,19 +39,61 @@ const DEVICE_CATALOG = {
     icon: '🔲',
     color: '#374151',
     models: {
-      'Patch Panel 24-port Cat6':  { ports:24, portType:'RJ45', racku:1 },
-      'Patch Panel 48-port Cat6':  { ports:48, portType:'RJ45', racku:1 },
-      'Patch Panel 24-port Cat6A': { ports:24, portType:'RJ45', racku:1 },
-      'Patch Panel 48-port Cat6A': { ports:48, portType:'RJ45', racku:1 },
-      'Fiber Patch Panel 12-LC':   { ports:12, portType:'LC Duplex', racku:1 },
-      'Fiber Patch Panel 24-LC':   { ports:24, portType:'LC Duplex', racku:1 },
-      'Fiber Patch Panel 48-LC':   { ports:48, portType:'LC Duplex', racku:2 },
-      'Keystone Patch Panel 24':   { ports:24, portType:'Keystone', racku:1 },
-      'Custom Patch Panel':        { ports:24, portType:'RJ45', racku:1, custom:true },
+      // Copper
+      'PP 24P Cat5e':              { ports:24, portType:'RJ45 Cat5e',  racku:1 },
+      'PP 48P Cat5e':              { ports:48, portType:'RJ45 Cat5e',  racku:1 },
+      'PP 24P Cat6':               { ports:24, portType:'RJ45 Cat6',   racku:1 },
+      'PP 48P Cat6':               { ports:48, portType:'RJ45 Cat6',   racku:1 },
+      'PP 24P Cat6A':              { ports:24, portType:'RJ45 Cat6A',  racku:1 },
+      'PP 48P Cat6A':              { ports:48, portType:'RJ45 Cat6A',  racku:1 },
+      'PP 24P Cat7':               { ports:24, portType:'RJ45 Cat7',   racku:1 },
+      'Keystone Panel 24P':        { ports:24, portType:'Keystone',    racku:1 },
+      'Keystone Panel 48P':        { ports:48, portType:'Keystone',    racku:1 },
+      // Fiber — LC Single-mode
+      'Fiber PP 12-LC SM (OS2)':   { ports:12, portType:'LC Duplex OS2 SM',  racku:1 },
+      'Fiber PP 24-LC SM (OS2)':   { ports:24, portType:'LC Duplex OS2 SM',  racku:1 },
+      'Fiber PP 48-LC SM (OS2)':   { ports:48, portType:'LC Duplex OS2 SM',  racku:2 },
+      // Fiber — LC Multi-mode
+      'Fiber PP 12-LC MM (OM3)':   { ports:12, portType:'LC Duplex OM3 MM',  racku:1 },
+      'Fiber PP 24-LC MM (OM3)':   { ports:24, portType:'LC Duplex OM3 MM',  racku:1 },
+      'Fiber PP 48-LC MM (OM4)':   { ports:48, portType:'LC Duplex OM4 MM',  racku:2 },
+      // Fiber — SC
+      'Fiber PP 12-SC SM (OS2)':   { ports:12, portType:'SC Duplex OS2 SM',  racku:1 },
+      'Fiber PP 24-SC SM (OS2)':   { ports:24, portType:'SC Duplex OS2 SM',  racku:1 },
+      'Fiber PP 12-SC MM (OM3)':   { ports:12, portType:'SC Duplex OM3 MM',  racku:1 },
+      // Fiber — MTP/MPO
+      'MTP/MPO Panel 12-fiber':    { ports:12, portType:'MTP/MPO 12F trunk', racku:1 },
+      'MTP/MPO Panel 24-fiber':    { ports:24, portType:'MTP/MPO 24F trunk', racku:1 },
+      'MTP/MPO Panel 144-fiber':   { ports:144,portType:'MTP/MPO 144F high-density', racku:1 },
+      // Fiber — ST
+      'Fiber PP 12-ST SM':         { ports:12, portType:'ST OS2 SM',  racku:1 },
+      'Fiber PP 24-ST SM':         { ports:24, portType:'ST OS2 SM',  racku:1 },
+      // Cisco
+      'Cisco Fiber Shelf 24-LC':   { ports:24, portType:'Cisco LC OS2/OM3', racku:1 },
+      'Cisco Fiber Shelf 48-LC':   { ports:48, portType:'Cisco LC OS2/OM3', racku:2 },
+      'Custom Patch Panel':        { ports:24, portType:'Custom', racku:1, custom:true },
     }
   },
 
-  // ── ROUTERS ──
+  // ── FIBER ENCLOSURES ──
+  fiber_enclosures: {
+    label: 'Fiber Enclosures',
+    icon: '🔆',
+    color: '#1E3A5F',
+    models: {
+      'LGX Enclosure 1U':          { ports:24, portType:'LC SM/MM', racku:1, desc:'1U 4 adapter plates' },
+      'LGX Enclosure 2U':          { ports:48, portType:'LC SM/MM', racku:2, desc:'2U 8 adapter plates' },
+      'Corning CCH 1U Shelf':      { ports:24, portType:'LC Corning', racku:1, desc:'6 module capacity' },
+      'Corning CCH 2U Shelf':      { ports:48, portType:'LC Corning', racku:2, desc:'12 module capacity' },
+      'Panduit OPTICOM 1U':        { ports:24, portType:'Panduit cassette', racku:1, desc:'6 cassette slots' },
+      'Panduit OPTICOM 4U':        { ports:96, portType:'Panduit cassette', racku:4, desc:'24 cassette slots' },
+      'CommScope FACT 1U':         { ports:24, portType:'CommScope', racku:1, desc:'Fiber aggregation' },
+      'AFL Distribution 1U':       { ports:24, portType:'AFL LC', racku:1, desc:'6 module capacity' },
+      'Fiber Splice Tray 1U':      { ports:12, portType:'Splice', racku:1, desc:'12-fiber splice' },
+      'Fiber Splice Enclosure 2U': { ports:48, portType:'Splice', racku:2, desc:'48-fiber splice' },
+      'Custom Fiber Enclosure':    { ports:24, portType:'Custom', racku:1, custom:true },
+    }
+  },
   routers: {
     label: 'Routers / WAN',
     icon: '🌐',

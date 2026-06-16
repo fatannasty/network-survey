@@ -1,5 +1,5 @@
 let state={surveyId:'',signalLevel:0,statusVal:'',futureCounts:{cisco:0,arista:0,other:0},activeVendor:null,currentSection:'site-info',photos:[],darkMode:false,networkSnapshot:null};
-const SECTIONS=['site-info','location','existing-eq','cabling','rack-capture','future-eq','contacts','findings'];
+const SECTIONS=['site-info','location','existing-eq','rack-capture','future-eq','contacts','findings'];
 const SIGNAL_LABELS=['','Very poor','Poor','Fair','Good','Excellent'];
 let autoSaveTimer=null,eqCount=0,ctCount=0,futureCount=0;
 
@@ -17,15 +17,15 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('sidebar-close').addEventListener('click',closeSidebar);
   document.getElementById('qr-url-input').value=window.location.origin||'http://localhost:8080';
   if(window.initRack)initRack();
-  // Equipment mapper — init after short delay so DOM and switch-mapper.js are fully ready
+  // Equipment mapper
   setTimeout(()=>{
     if(window.SwitchMapper){
-      SwitchMapper.init();  // sets up device selector + cable type btns
+      SwitchMapper.init();
       buildCableTypeBtns();
       loadMapperFromSurvey();
       updateCableSummary();
-      // Canvas will render properly when user navigates to existing-eq
     }
+    if(window.initRackStencil) initRackStencil();
   }, 100);
   // Start sensors
   initSensors();
@@ -171,6 +171,7 @@ function goToSection(sectionId){
   if(window._setBgScene)window._setBgScene(sectionId);
   // Re-render mapper canvas when section becomes visible
   if(sectionId==='existing-eq' && window.onMapperSectionVisible) onMapperSectionVisible();
+  if(sectionId==='existing-eq' && window.onRackStencilVisible)  onRackStencilVisible();
 }
 
 function updateProgress(){
