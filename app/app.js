@@ -1,5 +1,5 @@
 let state={surveyId:'',signalLevel:0,statusVal:'',futureCounts:{cisco:0,arista:0,other:0},activeVendor:null,currentSection:'site-info',photos:[],darkMode:false,networkSnapshot:null};
-const SECTIONS=['site-info','location','existing-eq','cabling','rack-capture','switch-mapper','future-eq','contacts','findings'];
+const SECTIONS=['site-info','location','existing-eq','cabling','rack-capture','future-eq','contacts','findings'];
 const SIGNAL_LABELS=['','Very poor','Poor','Fair','Good','Excellent'];
 let autoSaveTimer=null,eqCount=0,ctCount=0,futureCount=0;
 
@@ -7,7 +7,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   generateSurveyId();
   document.getElementById('survey-date').value=new Date().toISOString().split('T')[0];
   document.getElementById('print-date').textContent='Printed: '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  addEquipmentRow();addContact();updateProgress();updateStats();
+  addContact();updateProgress();updateStats();
   if(localStorage.getItem('netsurvey_lightmode')==='1')applyDarkMode(true);
   loadFromStorage();
   document.querySelectorAll('.nav-link').forEach(link=>{
@@ -390,11 +390,12 @@ function exportPDF(){document.getElementById('print-date').textContent='Printed:
 function downloadFile(content,filename,mimeType){const blob=new Blob([content],{type:mimeType});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href)}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
 
-// ── Switch Mapper helpers ──
-window.addSwitchFromSelect = function() {
-  const sel = document.getElementById('switch-model-select');
-  if (!sel || !sel.value) { showToast('Please choose a switch model first'); return; }
-  SwitchMapper.addSwitch(sel.value);
+// ── Equipment Mapper helpers ──
+window.addDeviceFromSelect = window.addDeviceFromSelect || function() {
+  const sel = document.getElementById('device-model-select');
+  if (!sel || !sel.value) { showToast('Choose a device model first'); return; }
+  const [model, cat] = sel.value.split('|');
+  SwitchMapper.addDevice(cat, model);
   sel.value = '';
   updateCableSummary();
 };
@@ -408,31 +409,26 @@ function buildCableTypeBtns() {
       style="${i===0?'border-color:'+c.color+';color:'+c.color:''}">
       <span class="cable-dot" style="background:${c.color}"></span>${c.label}
     </button>`).join('');
-
-  // Also build the hidden select for the mapper engine
-  let sel = document.getElementById('mapper-cable-type');
-  if (!sel) { sel = document.createElement('select'); sel.id = 'mapper-cable-type'; sel.style.display = 'none'; document.body.appendChild(sel); }
-  sel.innerHTML = CABLE_TYPES.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
 }
 
 window.selectCableType = function(id) {
-  const sel = document.getElementById('mapper-cable-type');
-  if (sel) sel.value = id;
-  const cable = CABLE_TYPES.find(c => c.id === id);
+  if (typeof mapperState !== 'undefined') mapperState.activeCableType = id;
+  const cable = (typeof CABLE_TYPES !== 'undefined') && CABLE_TYPES.find(c => c.id === id);
   document.querySelectorAll('.cable-type-btn').forEach(btn => {
     const isActive = btn.id === 'ctype-' + id;
     btn.classList.toggle('active', isActive);
-    btn.style.borderColor = isActive ? (cable ? cable.color : '') : '';
-    btn.style.color = isActive ? (cable ? cable.color : '') : '';
+    btn.style.borderColor = isActive && cable ? cable.color : '';
+    btn.style.color       = isActive && cable ? cable.color : '';
   });
 };
 
 window.clearAllCables = function() {
+  if (typeof mapperState === 'undefined') return;
   if (!confirm('Clear all cable connections?')) return;
   mapperState.cables = [];
-  mapperState.switches.forEach(sw => sw.ports.forEach(p => { p.connected = false; }));
+  mapperState.devices.forEach(d => d.ports.forEach(p => { p.connected = false; }));
   if (window.drawCanvas) drawCanvas();
-  if (window.renderPortDetail) renderPortDetail();
+  if (window.renderDeviceDetail) renderDeviceDetail();
   updateCableSummary();
   showToast('All cables cleared');
 };
@@ -444,22 +440,14 @@ function updateCableSummary() {
   if (!n) { el.textContent = 'No cables yet.'; return; }
   const byType = {};
   mapperState.cables.forEach(c => { byType[c.type] = (byType[c.type]||0) + 1; });
-  el.innerHTML = `<div style="margin-bottom:6px;color:var(--text);font-weight:600">${n} cable${n!==1?'s':''} total</div>` +
-    Object.entries(byType).map(([type, count]) => {
-      const ct = (typeof CABLE_TYPES !== 'undefined') && CABLE_TYPES.find(c=>c.id===type);
+  el.innerHTML = `<div style="margin-bottom:6px;color:var(--text);font-weight:600">${n} cable${n!==1?'s':''}</div>` +
+    Object.entries(byType).map(([type,count]) => {
+      const ct = (typeof CABLE_TYPES!=='undefined') && CABLE_TYPES.find(c=>c.id===type);
       return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
         <div style="width:10px;height:10px;border-radius:50%;background:${ct?ct.color:'#888'}"></div>
-        <span style="font-size:11px;color:var(--text2)">${ct?ct.label:type}: ${count}</span>
-      </div>`;
+        <span style="font-size:11px;color:var(--text2)">${ct?ct.label:type}: ${count}</span></div>`;
     }).join('');
 }
 
-// Override selectSwitch to also update heading
-const _origSelectSwitch = window.selectSwitch;
-window.selectSwitch = function(id) {
-  if (_origSelectSwitch) _origSelectSwitch(id);
-  const sw = mapperState && mapperState.switches.find(s=>s.id===id);
-  const el = document.getElementById('selected-sw-name');
-  if (el && sw) el.textContent = sw.hostname || sw.model;
-  updateCableSummary();
-};
+// Keep selectSwitch as alias for selectDevice
+window.selectSwitch = window.selectDevice;
