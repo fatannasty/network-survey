@@ -534,3 +534,78 @@ tbody td input,tbody td select{padding:7px 10px;font-size:12px}
   .mapper-layout { grid-template-columns: 1fr; }
   #mapper-canvas-wrap { min-height: 300px; }
 }
+
+/* ══════════════════════════════════════
+   DARK / LIGHT MODE TOGGLE
+   ══════════════════════════════════════ */
+
+/* Default is already dark. Light mode = body.light-mode */
+body.light-mode {
+  --navy:    #F0F4F8;
+  --surface: #FFFFFF;
+  --surface2:#F7FAFC;
+  --border:  rgba(0,58,93,0.12);
+  --border2: rgba(0,58,93,0.22);
+  --text:    #001E3C;
+  --text2:   #3A5A72;
+  --text3:   #7A96A8;
+  --shadow:  0 1px 4px rgba(0,58,93,0.08), 0 4px 20px rgba(0,58,93,0.06);
+}
+body.light-mode #bg-canvas { opacity: 0.12; }
+body.light-mode #sidebar {
+  background: #001E3C;
+}
+body.light-mode #topbar {
+  background: #003A5D;
+}
+body.light-mode .card {
+  background: #fff;
+  border-color: rgba(0,58,93,0.12);
+}
+body.light-mode input[type="text"],
+body.light-mode input[type="date"],
+body.light-mode input[type="number"],
+body.light-mode input[type="tel"],
+body.light-mode input[type="email"],
+body.light-mode select,
+body.light-mode textarea {
+  background: #F0F4F8;
+  border-color: rgba(0,58,93,0.2);
+  color: #001E3C;
+}
+body.light-mode input:focus,
+body.light-mode select:focus,
+body.light-mode textarea:focus {
+  background: #fff;
+  border-color: var(--cyan);
+}
+body.light-mode .pill {
+  background: #fff;
+  color: #3A5A72;
+  border-color: rgba(0,58,93,0.2);
+}
+body.light-mode .section-icon {
+  background: rgba(0,58,93,0.08);
+  border-color: rgba(0,58,93,0.15);
+}
+body.light-mode .vendor-form-inner,
+body.light-mode .future-item,
+body.light-mode .contact-card,
+body.light-mode #mapper-canvas-wrap {
+  background: rgba(0,20,50,0.04);
+  border-color: rgba(0,58,93,0.12);
+}
+body.light-mode .mapper-panel {
+  background: #fff;
+  border-color: rgba(0,58,93,0.12);
+}
+body.light-mode tbody td input,
+body.light-mode tbody td select {
+  background: #F0F4F8;
+  color: #001E3C;
+}
+body.light-mode .stats-row { background: rgba(0,58,93,0.06); }
+body.light-mode .stat-cell { background: #fff; }
+body.light-mode .stat-num  { color: #001E3C; }
+body.light-mode .sensor-bar { background: rgba(0,58,93,0.04); }
+body.light-mode option { background: #fff; color: #001E3C; }

@@ -8,7 +8,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('survey-date').value=new Date().toISOString().split('T')[0];
   document.getElementById('print-date').textContent='Printed: '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
   addEquipmentRow();addContact();updateProgress();updateStats();
-  if(localStorage.getItem('netsurvey_darkmode')==='1')applyDarkMode(true);
+  if(localStorage.getItem('netsurvey_lightmode')==='1')applyDarkMode(true);
   loadFromStorage();
   document.querySelectorAll('.nav-link').forEach(link=>{
     link.addEventListener('click',e=>{e.preventDefault();goToSection(link.dataset.section);if(window.innerWidth<=900)closeSidebar()});
@@ -17,8 +17,15 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('sidebar-close').addEventListener('click',closeSidebar);
   document.getElementById('qr-url-input').value=window.location.origin||'http://localhost:8080';
   if(window.initRack)initRack();
-  if(window.SwitchMapper){SwitchMapper.init();loadMapperFromSurvey();buildCableTypeBtns();}
-  updateCableSummary();
+  // Switch mapper — init after a tick so switch-mapper.js globals are ready
+  setTimeout(()=>{
+    if(window.SwitchMapper){
+      SwitchMapper.init();
+      buildCableTypeBtns();
+      loadMapperFromSurvey();
+      updateCableSummary();
+    }
+  }, 50);
   // Start sensors
   initSensors();
 });
@@ -93,30 +100,38 @@ window.stampGPS=function(){
 };
 
 // ── Network UI updates ──
+function getNetIcon(net) {
+  if (!navigator.onLine || net.type==='none') return '✕';
+  if (net.type==='wifi') return '📶';
+  if (net.type==='cellular') return '📡';
+  if (net.type==='ethernet') return '🔌';
+  return '🌐';
+}
+
 function updateNetworkUI(net){
   const txt=document.getElementById('net-status-text');
   const bars=document.querySelectorAll('#signal-mini .signal-mini-bar');
   const speedItem=document.getElementById('net-speed-item');
   const speedTxt=document.getElementById('net-speed-text');
-  const dot=document.getElementById('gps-dot'); // reuse sensor bar
-  if(txt)txt.textContent='Network: '+(net.signal||'Unknown');
-  bars.forEach((b,i)=>b.classList.toggle('lit',i<net.bars));
-  if(net.downlink&&speedItem){speedItem.style.display='flex';if(speedTxt)speedTxt.textContent=net.downlink+' Mbps'}
-  // color dot based on bars
-  const nd=document.createElement('div'); // dummy
-  const netDotClass=net.bars>=4?'net-good':net.bars>=2?'net-warn':'net-bad';
-  // update existing dot class after GPS dot
+  if(txt) txt.textContent = getNetIcon(net) + ' ' + (net.signal||'Detecting…');
+  if(bars) bars.forEach((b,i)=>b.classList.toggle('lit',i<net.bars));
+  if(net.downlink && speedItem){ speedItem.style.display='flex'; if(speedTxt) speedTxt.textContent=net.downlink+' Mbps'; }
+  else if(speedItem) speedItem.style.display='none';
 }
 
 function updateNetworkWidget(net){
   const typEl=document.getElementById('nw-type');
   const spEl=document.getElementById('nw-speed');
   const miniEl=document.getElementById('nw-signal-mini');
-  if(typEl)typEl.textContent=net.signal||'Unknown';
-  if(spEl)spEl.textContent=net.downlink?net.downlink+' Mbps download':(net.effectiveType?net.effectiveType.toUpperCase():'');
-  if(miniEl){
-    miniEl.querySelectorAll('.signal-mini-bar').forEach((b,i)=>b.classList.toggle('lit',i<net.bars));
+  if(typEl) typEl.textContent = getNetIcon(net) + '  ' + (net.signal||'Detecting…');
+  if(spEl){
+    let detail = [];
+    if(net.effectiveType && net.effectiveType !== 'unknown') detail.push(net.effectiveType.toUpperCase());
+    if(net.downlink) detail.push(net.downlink + ' Mbps');
+    if(net.rtt) detail.push('RTT ' + net.rtt + 'ms');
+    spEl.textContent = detail.join(' · ') || (navigator.onLine ? 'Connected' : 'Offline');
   }
+  if(miniEl) miniEl.querySelectorAll('.signal-mini-bar').forEach((b,i)=>b.classList.toggle('lit',i<net.bars));
   state.networkSnapshot=net;
 }
 
@@ -173,9 +188,11 @@ function closeSidebar(){document.getElementById('sidebar').classList.remove('ope
 function toggleDarkMode(){applyDarkMode(!state.darkMode)}
 function applyDarkMode(on){
   state.darkMode=on;
+  // Dark is default; 'on' here means LIGHT mode is on
+  document.body.classList.toggle('light-mode',on);
   const btn=document.getElementById('dark-mode-btn');
-  if(btn){btn.textContent=on?'☀️ Light mode':'🌙 Dark mode';btn.classList.toggle('active',on)}
-  localStorage.setItem('netsurvey_darkmode',on?'1':'0');
+  if(btn){btn.textContent=on?'🌙 Dark mode':'☀️ Light mode';btn.classList.toggle('active',on)}
+  localStorage.setItem('netsurvey_lightmode',on?'1':'0');
 }
 
 function togglePill(el,groupId){
