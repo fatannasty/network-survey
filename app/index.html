@@ -76,7 +76,7 @@
       <div class="topbar-actions">
         <span id="save-status" class="save-status"></span>
         <button class="btn btn-outline" onclick="openQR()">&#9707; QR</button>
-        <button class="btn btn-ghost" onclick="exportPDF()">&#8681; Export</button>
+        <button class="btn btn-outline" onclick="generatePDFReport()">&#128438; Report</button>
         <button class="btn btn-primary" onclick="saveSurvey()">&#10003; Save</button>
       </div>
     </header>
@@ -582,7 +582,7 @@
             <button class="btn btn-ghost" onclick="exportTXT()">&#8681; Text</button>
             <button class="btn btn-ghost" onclick="exportJSON()">&#8681; JSON</button>
             <button class="btn btn-outline" onclick="openQR()">&#9707; QR Code</button>
-            <button class="btn btn-ghost" onclick="exportPDF()">&#128438; PDF</button>
+            <button class="btn btn-outline" onclick="generatePDFReport()" style="background:rgba(0,183,217,0.12)">&#128438; Generate PDF Report</button>
             <button class="btn btn-primary" onclick="saveSurvey()">&#10003; Save survey</button>
           </div>
         </div>
@@ -627,6 +627,7 @@
 <script src="rack.js"></script>
 <script src="rack-stencil.js"></script>
 <script src="switch-mapper.js"></script>
+<script src="report.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
