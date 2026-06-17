@@ -52,9 +52,18 @@ var CAT = {
     {n:'Ubiquiti UniFi U6 Pro',u:0},{n:'Custom AP',u:0}
   ]},
   other:{icon:'📦',items:[
-    {n:'Cable Manager 1U',u:1},{n:'Cable Manager 2U',u:2},{n:'Blank Panel 1U',u:1},{n:'Blank Panel 2U',u:2},
-    {n:'Rack Shelf 1U',u:1},{n:'Rack Shelf 2U',u:2},{n:'Fan Tray 1U',u:1},
-    {n:'KVM Drawer 1U',u:1},{n:'KVM 8-Port IP',u:1},{n:'LCD Monitor 1U',u:1},{n:'Custom',u:1}
+    // Blanks & cable management
+    {n:'Blank Panel 1U',u:1,c:'#0F0F0F'},{n:'Blank Panel 2U',u:2,c:'#0F0F0F'},
+    {n:'Blank Panel 4U',u:4,c:'#0F0F0F'},{n:'Blank Panel 8U',u:8,c:'#0F0F0F'},
+    {n:'Cable Manager 1U Horiz',u:1,c:'#1F2937'},{n:'Cable Manager 2U Horiz',u:2,c:'#1F2937'},
+    {n:'Cable Manager 1U Vertical',u:1,c:'#1F2937'},{n:'D-Ring Cable Manager 1U',u:1,c:'#1F2937'},
+    // Accessories
+    {n:'Rack Shelf 1U Fixed',u:1,c:'#374151'},{n:'Rack Shelf 2U Adjustable',u:2,c:'#374151'},
+    {n:'Fan Tray 1U',u:1,c:'#1E1E1E'},{n:'KVM Drawer 1U',u:1,c:'#2D1E3A'},
+    {n:'KVM Switch 8-Port IP',u:1,c:'#3B0764'},{n:'KVM Switch 16-Port IP',u:1,c:'#3B0764'},
+    {n:'LCD Monitor/KVM 1U',u:1,c:'#2D2D2D'},{n:'Media Converter Shelf 1U',u:1,c:'#1E1B4B'},
+    // Custom — user can name anything
+    {n:'Custom / Other (name it below)',u:1,c:'#374151'}
   ]}
 };
 
@@ -229,12 +238,54 @@ function populateRkModels(){
   rkUpdateModels();
   cat.addEventListener('change',rkUpdateModels);
 }
+
 function rkUpdateModels(){
   var sel=document.getElementById('rk-cat');
   var mod=document.getElementById('rk-model');
   if(!sel||!mod)return;
-  var list=(CAT[sel.value]||{items:[]}).items.filter(function(m){return m.u>0;});
-  mod.innerHTML=list.map(function(m){return'<option value="'+m.n+'">'+(m.n)+(m.u>1?' ('+m.u+'U)':'')+'</option>';}).join('');
+  var list=(CAT[sel.value]||{items:[]}).items;
+  mod.innerHTML=list.map(function(m){
+    return '<option value="'+m.n+'">'+m.n+(m.u>1?' ('+m.u+'U)':'')+'</option>';
+  }).join('');
+  rkModelChanged();
+}
+
+function rkModelChanged(){
+  var mod=document.getElementById('rk-model');
+  var wrap=document.getElementById('rk-custom-wrap');
+  if(!mod||!wrap)return;
+  var isCustom=(mod.value==='Custom / Other (name it below)');
+  wrap.style.display=isCustom?'flex':'none';
+}
+
+function rkQuickBlank(u){
+  if(!_selectedSlot){toast('Click a rack slot first, then quick-add');return;}
+  var rack=S.racks.find(function(r){return r.id===_selectedSlot.rackId;});
+  if(!rack)return;
+  var uStart=_selectedSlot.uIndex;
+  for(var i=uStart;i<uStart+u;i++){
+    if(i>=rack.units||rack.rows[i]!==null){toast('Not enough free space for '+u+'U blank');return;}
+  }
+  var devId='d'+(S._rid++);
+  rack.devs[devId]={label:u+'U Blank',model:'Blank Panel',cat:'other',u:u,color:'#0F0F0F',uStart:uStart};
+  for(var j=uStart;j<uStart+u;j++)rack.rows[j]=devId;
+  _selectedSlot=null;renderRacks();renderInventory();autoSave();
+  toast('Added '+u+'U blank panel');
+}
+
+function rkQuickCableMgr(u){
+  if(!_selectedSlot){toast('Click a rack slot first, then quick-add');return;}
+  var rack=S.racks.find(function(r){return r.id===_selectedSlot.rackId;});
+  if(!rack)return;
+  var uStart=_selectedSlot.uIndex;
+  for(var i=uStart;i<uStart+u;i++){
+    if(i>=rack.units||rack.rows[i]!==null){toast('Not enough free space for '+u+'U cable manager');return;}
+  }
+  var devId='d'+(S._rid++);
+  rack.devs[devId]={label:u+'U Cable Mgr',model:'Cable Manager',cat:'other',u:u,color:'#1F2937',uStart:uStart};
+  for(var j=uStart;j<uStart+u;j++)rack.rows[j]=devId;
+  _selectedSlot=null;renderRacks();renderInventory();autoSave();
+  toast('Added '+u+'U cable manager');
 }
 
 function rkAddRack(){
@@ -263,32 +314,92 @@ function rkPlaceDevice(){
   var catEl=document.getElementById('rk-cat');
   var modEl=document.getElementById('rk-model');
   var lblEl=document.getElementById('rk-dev-label');
-  if(!modEl||!modEl.value){toast('Choose a model');return;}
+  var uEl  =document.getElementById('rk-dev-u');
+  var custEl=document.getElementById('rk-dev-custom');
 
-  var cat=catEl?catEl.value:'other';
+  if(!modEl||!modEl.value){toast('Choose a model first');return;}
+
+  var cat  =catEl?catEl.value:'other';
   var model=modEl.value;
-  var label=(lblEl&&lblEl.value.trim())||model;
+  var isCustom=(model==='Custom / Other (name it below)');
+  var customName=custEl?custEl.value.trim():'';
+  var label=(lblEl&&lblEl.value.trim())||(isCustom?customName:'')||model;
+  if(isCustom&&!customName&&!label){toast('Enter a name for the custom device');return;}
+
   var list=(CAT[cat]||{items:[]}).items;
   var md=list.find(function(m){return m.n===model;})||{u:1};
-  var u=md.u||1;
+  // Honour the U override field
+  var uOverride=uEl?parseInt(uEl.value):0;
+  var u=(uOverride>=1)?uOverride:(md.u||1);
   var uStart=_selectedSlot.uIndex;
 
   // Check space
   for(var i=uStart;i<uStart+u;i++){
-    if(i>=rack.units){toast('Not enough space at U'+(uStart+1));return;}
-    if(rack.rows[i]!==null){toast('U'+(i+1)+' is occupied');return;}
+    if(i>=rack.units){toast('Not enough rack space — only '+(rack.units-uStart)+'U free here');return;}
+    if(rack.rows[i]!==null){toast('U'+(i+1)+' is already occupied');return;}
   }
 
   var devId='d'+(S._rid++);
-  rack.devs[devId]={label:label,model:model,cat:cat,u:u,color:CAT_COLORS[cat]||'#374151',uStart:uStart};
+  var displayName=isCustom?(customName||label):label;
+  var color=(md.c)||CAT_COLORS[cat]||'#374151';
+  rack.devs[devId]={
+    label:displayName,model:isCustom?('Custom: '+(customName||label)):model,
+    cat:cat,u:u,color:color,uStart:uStart
+  };
   for(var j=uStart;j<uStart+u;j++)rack.rows[j]=devId;
 
   if(lblEl)lblEl.value='';
+  if(uEl)uEl.value='';
+  if(custEl)custEl.value='';
   _selectedSlot=null;
-  renderRacks();
-  renderInventory();
-  autoSave();
-  toast('Placed '+label);
+  renderRacks();renderInventory();autoSave();
+  toast('Placed '+displayName+' ('+u+'U) in '+rack.label+' U'+(uStart+1));
+}
+
+// ── Resize a device already in the rack ────────────────
+function rkResizeDev(rackId,devId){
+  var rack=S.racks.find(function(r){return r.id===rackId;});
+  if(!rack)return;
+  var dev=rack.devs[devId];if(!dev)return;
+
+  var newU=parseInt(prompt('Resize "'+dev.label+'" — enter new U size (current: '+dev.u+'U):',dev.u));
+  if(!newU||isNaN(newU)||newU<1){toast('Cancelled');return;}
+  if(newU===dev.u){toast('No change');return;}
+
+  var uStart=dev.uStart;
+
+  // Clear current footprint
+  for(var i=0;i<rack.rows.length;i++){if(rack.rows[i]===devId)rack.rows[i]=null;}
+
+  // Check new space
+  for(var i=uStart;i<uStart+newU;i++){
+    if(i>=rack.units){
+      // Restore
+      for(var j=uStart;j<uStart+dev.u;j++)rack.rows[j]=devId;
+      toast('Not enough space — rack only has '+rack.units+'U');return;
+    }
+    if(rack.rows[i]!==null&&rack.rows[i]!==devId){
+      for(var j=uStart;j<uStart+dev.u;j++)rack.rows[j]=devId;
+      toast('U'+(i+1)+' is occupied — cannot resize here');return;
+    }
+  }
+
+  // Apply new size
+  dev.u=newU;
+  for(var i=uStart;i<uStart+newU;i++)rack.rows[i]=devId;
+  renderRacks();renderInventory();autoSave();
+  toast('Resized to '+newU+'U');
+}
+
+// ── Edit device label in place ─────────────────────────
+function rkEditLabel(rackId,devId){
+  var rack=S.racks.find(function(r){return r.id===rackId;});
+  if(!rack)return;
+  var dev=rack.devs[devId];if(!dev)return;
+  var newLabel=prompt('Edit label:',dev.label);
+  if(newLabel===null)return;
+  dev.label=newLabel.trim()||dev.label;
+  renderRacks();renderInventory();autoSave();
 }
 
 function rkRemoveDev(rackId,devId){
@@ -428,9 +539,13 @@ function renderRacks(){
 
         var db=document.createElement('div');db.className='rack-device-block';
         db.innerHTML=
-          '<div class="rack-dev-name" style="color:'+lightenText(dev.color)+'">'+esc(dev.label)+'</div>'+
+          '<div class="rack-dev-name" style="color:#fff">'+esc(dev.label)+'</div>'+
           '<span class="rack-dev-u">'+dev.u+'U</span>'+
-          '<button class="rack-dev-rm" onclick="event.stopPropagation();rkRemoveDev(\''+rack.id+'\',\''+devId+'\')">✕</button>';
+          '<div class="rack-dev-actions">'+
+            '<button class="rack-dev-btn" onclick="event.stopPropagation();rkEditLabel(\''+rack.id+'\',\''+devId+'\')" title="Edit label">✎</button>'+
+            '<button class="rack-dev-btn" onclick="event.stopPropagation();rkResizeDev(\''+rack.id+'\',\''+devId+'\')" title="Resize (change U)">⇕</button>'+
+            '<button class="rack-dev-rm" onclick="event.stopPropagation();rkRemoveDev(\''+rack.id+'\',\''+devId+'\')" title="Remove">✕</button>'+
+          '</div>';
         db.style.background=dev.color;
         db.style.height=(dev.u*28-2)+'px';
         db.style.borderRadius='3px';
@@ -730,18 +845,58 @@ function mkClose(){
 
 // ── Contacts ───────────────────────────────────────────
 function addContact(){
-  S.contacts.push({name:'',role:'',phone:'',email:''});
+  S.contacts.push({name:'',role:'',company:'',phone:'',email:'',notes:''});
   renderContacts();
 }
+
 function renderContacts(){
   var el=document.getElementById('contacts-list');if(!el)return;
+  if(!S.contacts.length){
+    el.innerHTML='<div class="hint" style="padding:8px 0">No contacts yet — click "+ Add contact" above.</div>';
+    return;
+  }
+  var ROLES=['IT Admin','Network Engineer','Site Manager','Facilities Manager',
+             'ISP Contact','Security','On-call Tech','Project Manager','Other'];
   el.innerHTML=S.contacts.map(function(c,i){
-    return '<div class="contact-row">'+
-      '<input placeholder="Name" value="'+esc(c.name)+'" oninput="S.contacts['+i+'].name=this.value">'+
-      '<input placeholder="Role" value="'+esc(c.role)+'" oninput="S.contacts['+i+'].role=this.value">'+
-      '<input placeholder="Phone" value="'+esc(c.phone)+'" oninput="S.contacts['+i+'].phone=this.value">'+
-      '<input placeholder="Email" value="'+esc(c.email)+'" oninput="S.contacts['+i+'].email=this.value">'+
-      '<button class="btn-danger" onclick="S.contacts.splice('+i+',1);renderContacts()">✕</button>'+
+    var roleOpts=ROLES.map(function(r){
+      return '<option'+(c.role===r?' selected':'')+'>'+r+'</option>';
+    }).join('');
+    return '<div class="contact-card">'+
+      '<div class="contact-card-header">'+
+        '<div class="contact-avatar">'+( c.name?c.name.charAt(0).toUpperCase():'?')+'</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<input class="contact-name-input" placeholder="Full name" value="'+esc(c.name)+'" '+
+            'oninput="S.contacts['+i+'].name=this.value;this.closest(\'.contact-card\').querySelector(\'.contact-avatar\').textContent=this.value?this.value.charAt(0).toUpperCase():\'?\'">'+
+          '<div class="hint" style="margin-top:2px">'+(c.role||'No role set')+'</div>'+
+        '</div>'+
+        '<button class="btn-danger" style="flex-shrink:0" onclick="S.contacts.splice('+i+',1);renderContacts();autoSave()">✕ Remove</button>'+
+      '</div>'+
+      '<div class="contact-card-body">'+
+        '<div class="form-grid" style="grid-template-columns:1fr 1fr;gap:8px">'+
+          '<div class="field">'+
+            '<label>Role</label>'+
+            '<select onchange="S.contacts['+i+'].role=this.value;renderContacts()">'+
+              '<option value="">Select role…</option>'+roleOpts+
+            '</select>'+
+          '</div>'+
+          '<div class="field">'+
+            '<label>Company / org</label>'+
+            '<input placeholder="e.g. Amtrak IT, Comcast" value="'+esc(c.company||'')+'" oninput="S.contacts['+i+'].company=this.value">'+
+          '</div>'+
+          '<div class="field">'+
+            '<label>Phone</label>'+
+            '<input type="tel" placeholder="+1 (555) 000-0000" value="'+esc(c.phone)+'" oninput="S.contacts['+i+'].phone=this.value">'+
+          '</div>'+
+          '<div class="field">'+
+            '<label>Email</label>'+
+            '<input type="email" placeholder="name@example.com" value="'+esc(c.email)+'" oninput="S.contacts['+i+'].email=this.value">'+
+          '</div>'+
+          '<div class="field span2">'+
+            '<label>Notes / availability</label>'+
+            '<input placeholder="e.g. On-call Mon–Fri 8am–5pm, after-hours emergency only…" value="'+esc(c.notes||'')+'" oninput="S.contacts['+i+'].notes=this.value">'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
     '</div>';
   }).join('');
 }
@@ -967,7 +1122,14 @@ function buildReport(f,now){
 
   // Contact rows
   var contactRows=S.contacts.filter(function(c){return c.name;}).map(function(c){
-    return '<tr><td>'+esc(c.name)+'</td><td>'+esc(c.role)+'</td><td>'+esc(c.phone)+'</td><td>'+esc(c.email)+'</td></tr>';
+    return '<tr>'+
+      '<td style="font-weight:600">'+esc(c.name)+'</td>'+
+      '<td>'+esc(c.role||'')+'</td>'+
+      '<td>'+esc(c.company||'')+'</td>'+
+      '<td><a href="tel:'+esc(c.phone||'')+'" style="color:#003A5D">'+esc(c.phone||'—')+'</a></td>'+
+      '<td><a href="mailto:'+esc(c.email||'')+'" style="color:#003A5D">'+esc(c.email||'—')+'</a></td>'+
+      '<td style="color:#64748B;font-size:9pt">'+esc(c.notes||'')+'</td>'+
+    '</tr>';
   }).join('');
 
   return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Network Site Survey Report</title><style>'+reportCSS(statusColor,statusBg)+'</style></head><body>'+
@@ -1096,7 +1258,7 @@ function buildReport(f,now){
     '</div>'+
     (f.addnotes?'<div class="notes-block" style="margin-top:16px"><div class="notes-lbl">Additional notes</div>'+esc(f.addnotes)+'</div>':'')+
     (contactRows?'<h3 style="font-size:14px;font-weight:700;color:#003A5D;margin:20px 0 10px">Key Contacts</h3>'+
-      '<table><thead><tr><th>Name</th><th>Role</th><th>Phone</th><th>Email</th></tr></thead>'+
+      '<table><thead><tr><th>Name</th><th>Role</th><th>Company</th><th>Phone</th><th>Email</th><th>Notes</th></tr></thead>'+
       '<tbody>'+contactRows+'</tbody></table>':'')
   )+
   '<div class="report-footer">'+

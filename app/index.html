@@ -147,6 +147,15 @@
             <div class="field"><label>VLANs in use</label><input id="f-vlans" placeholder="e.g. 10, 20, 99"></div>
             <div class="field"><label>DNS servers</label><input id="f-dns" placeholder="e.g. 8.8.8.8, 1.1.1.1"></div>
           </div>
+        <!-- Contacts in Site Info -->
+        <div class="card span2" style="margin-top:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div class="card-title" style="margin-bottom:0">👤 Key Contacts</div>
+            <button class="btn-sm" onclick="addContact()">+ Add contact</button>
+          </div>
+          <div id="contacts-list">
+            <div class="hint" style="padding:8px 0">No contacts yet — click "+ Add contact" to add site managers, IT staff, and ISP contacts.</div>
+          </div>
         </div>
       </div>
 
@@ -155,8 +164,6 @@
         <button class="btn-primary" onclick="goPage('equip')">Next: Equipment →</button>
       </div>
     </div>
-
-    <!-- PAGE: EQUIPMENT -->
     <div class="page" id="page-equip">
       <div class="page-header">
         <h1>Equipment Inventory</h1>
@@ -210,9 +217,11 @@
           </div>
           <button class="btn-primary" style="width:100%;margin-top:8px" onclick="rkAddRack()">+ Add rack</button>
 
-          <div style="height:1px;background:var(--border);margin:18px 0"></div>
+          <div style="height:1px;background:var(--border);margin:14px 0"></div>
 
-          <div class="card-title" style="margin-bottom:10px">② Place equipment</div>
+          <div class="card-title" style="margin-bottom:8px">② Place equipment</div>
+          <div id="rk-target-hint" class="hint" style="margin-bottom:8px;padding:5px 8px;background:rgba(0,183,217,.06);border-radius:6px;border:1px solid var(--border)">Click an empty rack slot first</div>
+
           <div class="field"><label>Category</label>
             <select id="rk-cat" onchange="rkUpdateModels()">
               <option value="switches">🔀 Switches</option>
@@ -221,17 +230,41 @@
               <option value="router">🌐 Routers / FW</option>
               <option value="server">🖥 Servers</option>
               <option value="power">⚡ Power / UPS</option>
-              <option value="access">📦 Accessories</option>
+              <option value="ap">📶 Access Points</option>
+              <option value="other">📦 Blanks / Accessories</option>
             </select>
           </div>
-          <div class="field"><label>Model</label><select id="rk-model"></select></div>
-          <div class="field"><label>Label</label><input id="rk-dev-label" placeholder="e.g. SW-CORE-01"></div>
-          <div id="rk-target-hint" class="hint" style="margin:6px 0 8px">Select a rack slot to place here</div>
+          <div class="field"><label>Model</label>
+            <select id="rk-model" onchange="rkModelChanged()"></select>
+          </div>
+          <div class="field" id="rk-custom-wrap" style="display:none">
+            <label>Custom device name <span style="color:var(--red)">*required</span></label>
+            <input id="rk-dev-custom" placeholder="e.g. Old Cisco 3750X, legacy router…">
+          </div>
+          <div class="field"><label>Label / hostname <span class="hint" style="text-transform:none;letter-spacing:0">(optional)</span></label>
+            <input id="rk-dev-label" placeholder="e.g. SW-CORE-01">
+          </div>
+          <div class="field">
+            <label>U size override <span class="hint" style="text-transform:none;letter-spacing:0">(blank = use default)</span></label>
+            <input id="rk-dev-u" type="number" min="1" max="48" placeholder="e.g. 2">
+          </div>
+
+          <div style="margin:8px 0 10px">
+            <div class="hint" style="margin-bottom:5px">Quick-add blanks &amp; cable managers:</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap">
+              <button class="btn-sm" onclick="rkQuickBlank(1)">1U Blank</button>
+              <button class="btn-sm" onclick="rkQuickBlank(2)">2U Blank</button>
+              <button class="btn-sm" onclick="rkQuickBlank(4)">4U Blank</button>
+              <button class="btn-sm" onclick="rkQuickCableMgr(1)">1U Cable Mgr</button>
+              <button class="btn-sm" onclick="rkQuickCableMgr(2)">2U Cable Mgr</button>
+            </div>
+          </div>
+
           <button class="btn-primary" style="width:100%" onclick="rkPlaceDevice()">Place in rack</button>
           <button class="btn-ghost"   style="width:100%;margin-top:6px" onclick="rkExportCSV()">⬇ Export CSV</button>
-          <button class="btn-ghost"   style="width:100%;margin-top:4px" onclick="rkClear()">✕ Clear all</button>
+          <button class="btn-ghost"   style="width:100%;margin-top:4px" onclick="rkClear()">✕ Clear all racks</button>
 
-          <div style="height:1px;background:var(--border);margin:18px 0"></div>
+          <div style="height:1px;background:var(--border);margin:14px 0"></div>
           <div class="card-title" style="margin-bottom:6px">Inventory</div>
           <div id="rk-inventory" class="hint">No racks yet.</div>
         </div>
@@ -371,11 +404,6 @@
             <button class="pill" data-val="No">🟢 No action</button>
           </div>
           <div class="field" style="margin-top:12px"><label>Estimated completion</label><input id="f-completion" type="date"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">👤 Key Contacts</div>
-          <div id="contacts-list"></div>
-          <button class="btn-sm" style="margin-top:8px" onclick="addContact()">+ Add contact</button>
         </div>
         <div class="card span2">
           <div class="card-title">📝 Additional Notes</div>

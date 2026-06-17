@@ -298,3 +298,20 @@ option{background:#001020}
   .section{page-break-before:always}
   .cover{page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+
+/* ── Rack action buttons ── */
+.rack-dev-actions{display:flex;gap:3px;flex-shrink:0;opacity:0;transition:opacity .15s}
+.rack-device-block:hover .rack-dev-actions{opacity:1}
+.rack-dev-btn{background:rgba(0,0,0,.4);border:none;color:rgba(255,255,255,.7);cursor:pointer;border-radius:3px;width:20px;height:18px;font-size:11px;line-height:1;padding:0;transition:all .15s}
+.rack-dev-btn:hover{background:rgba(0,183,217,.5);color:#fff}
+.rack-dev-rm{background:rgba(200,0,0,.45);border:none;color:#fff;cursor:pointer;border-radius:3px;width:20px;height:18px;font-size:11px;line-height:1;padding:0;transition:all .15s}
+.rack-dev-rm:hover{background:rgba(239,68,68,.8)}
+
+/* ── Contact cards ── */
+.contact-card{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;transition:border-color .15s}
+.contact-card:hover{border-color:var(--border2)}
+.contact-card-header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(0,183,217,.04);border-bottom:1px solid var(--border)}
+.contact-card-body{padding:12px 16px}
+.contact-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0}
+.contact-name-input{font-size:14px;font-weight:600;color:var(--text);background:transparent;border:none;border-bottom:1px solid var(--border2);border-radius:0;padding:2px 0;width:100%;outline:none}
+.contact-name-input:focus{border-bottom-color:var(--cyan)}
