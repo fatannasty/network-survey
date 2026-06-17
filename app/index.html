@@ -2,632 +2,346 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Amtrak Network Site Survey</title>
-<link rel="stylesheet" href="style.css">
-<link rel="manifest" href="manifest.json">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>NetSurvey — Network Site Survey</title>
+<link rel="stylesheet" href="main.css">
 </head>
 <body>
-<canvas id="bg-canvas"></canvas>
-<div id="app">
+<div id="shell">
 
-  <!-- ── SIDEBAR ── -->
-  <nav id="sidebar" aria-label="Survey navigation">
-    <div class="sidebar-top-line"></div>
-    <div class="sidebar-header">
-      <div class="ns-logo">
-        <div class="ns-logo-icon">
-          <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
-            <rect width="34" height="34" rx="9" fill="url(#nsgrad)"/>
-            <rect x="6" y="10" width="22" height="3" rx="1.5" fill="white" opacity="0.9"/>
-            <rect x="6" y="15.5" width="16" height="3" rx="1.5" fill="white" opacity="0.7"/>
-            <rect x="6" y="21" width="10" height="3" rx="1.5" fill="white" opacity="0.5"/>
-            <circle cx="25" cy="22.5" r="4" fill="#00B7D9" opacity="0.9"/>
-            <defs>
-              <linearGradient id="nsgrad" x1="0" y1="0" x2="34" y2="34">
-                <stop offset="0%" stop-color="#003A5D"/>
-                <stop offset="100%" stop-color="#001E3C"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-        <div class="ns-logo-text">
-          <span class="ns-name">NetSurvey</span>
-          <span class="ns-sub">IT Field Tool</span>
-        </div>
+  <!-- SIDEBAR -->
+  <nav id="nav">
+    <div id="nav-logo">
+      <svg width="32" height="32" viewBox="0 0 32 32">
+        <rect width="32" height="32" rx="8" fill="#00B7D9"/>
+        <rect x="6"  y="8"  width="20" height="3" rx="1.5" fill="#001E3C"/>
+        <rect x="6"  y="14" width="14" height="3" rx="1.5" fill="#001E3C" opacity=".7"/>
+        <rect x="6"  y="20" width="9"  height="3" rx="1.5" fill="#001E3C" opacity=".5"/>
+      </svg>
+      <div>
+        <div class="logo-name">NetSurvey</div>
+        <div class="logo-sub">Field Tool</div>
       </div>
-      <button id="sidebar-close" aria-label="Close">&#10005;</button>
     </div>
 
-    <p class="nav-label">Survey</p>
-    <ul class="nav-list">
-      <li><a href="#" class="nav-link active" data-section="site-info"><span class="nav-icon">&#127968;</span> Site Info <span class="nav-dot"></span></a></li>
-      <li><a href="#" class="nav-link" data-section="location"><span class="nav-icon">&#128205;</span> Location <span class="nav-dot"></span></a></li>
-      <li><a href="#" class="nav-link" data-section="existing-eq"><span class="nav-icon">&#128268;</span> Existing Equipment <span class="nav-dot"></span></a></li>
-      <li><a href="#" class="nav-link" data-section="rack-capture"><span class="nav-icon">&#128247;</span> Rack Capture <span class="nav-dot"></span></a></li>
-      <li><a href="#" class="nav-link" data-section="future-eq"><span class="nav-icon">&#43;</span> Planned Equipment <span class="nav-dot"></span></a></li>
-      <li><a href="#" class="nav-link" data-section="contacts"><span class="nav-icon">&#128101;</span> Contacts <span class="nav-dot"></span></a></li>
-      <li><a href="#" class="nav-link" data-section="findings"><span class="nav-icon">&#128203;</span> Findings <span class="nav-dot"></span></a></li>
-    </ul>
+    <div class="nav-label">Survey</div>
+    <a class="nav-item active" data-page="info"    href="#">📋 Site Info</a>
+    <a class="nav-item"        data-page="equip"   href="#">🔌 Equipment</a>
+    <a class="nav-item"        data-page="rack"    href="#">🗄 Rack Layout</a>
+    <a class="nav-item"        data-page="photos"  href="#">📷 Photos</a>
+    <a class="nav-item"        data-page="findings"href="#">📝 Findings</a>
 
-    <p class="nav-label">Tools</p>
-    <div class="sidebar-tools">
-      <button class="tool-btn" onclick="openHistory()">&#128193; Survey history</button>
-      <button class="tool-btn" id="dark-mode-btn" onclick="toggleDarkMode()">&#9728; Light mode</button>
-      <button class="tool-btn" onclick="openQR()">&#9707; QR code</button>
-      <button class="tool-btn" onclick="exportPDF()">&#128438; Print / PDF</button>
-    </div>
-    <div class="sidebar-footer">
-      <button class="btn-sidebar" onclick="newSurvey()">+ New Survey</button>
+    <div class="nav-label">Actions</div>
+    <a class="nav-item" href="#" onclick="openReport()">📄 Generate Report</a>
+    <a class="nav-item" href="#" onclick="saveSurvey()">💾 Save Survey</a>
+    <a class="nav-item" href="#" onclick="openHistory()">🕐 History</a>
+    <a class="nav-item" href="#" onclick="newSurvey()">➕ New Survey</a>
+
+    <div id="nav-status">
+      <div id="net-badge">🌐 Detecting…</div>
+      <div id="gps-badge">📍 No GPS</div>
     </div>
   </nav>
 
-  <div id="overlay" onclick="closeSidebar()"></div>
+  <div id="overlay" onclick="closeNav()"></div>
 
-  <!-- ── MAIN ── -->
+  <!-- MAIN -->
   <div id="main">
     <header id="topbar">
-      <button id="menu-btn" aria-label="Menu">&#9776;</button>
-      <div class="topbar-title">
-        <h1 id="topbar-heading">Network Site Survey</h1>
-        <span id="survey-id-display" class="survey-id-badge"></span>
-      </div>
-      <div class="topbar-actions">
-        <span id="save-status" class="save-status"></span>
-        <button class="btn btn-outline" onclick="openQR()">&#9707; QR</button>
-        <button class="btn btn-outline" onclick="generatePDFReport()">&#128438; Report</button>
-        <button class="btn btn-primary" onclick="saveSurvey()">&#10003; Save</button>
+      <button id="menu-btn" onclick="openNav()">☰</button>
+      <div id="topbar-title">Network Site Survey</div>
+      <div id="topbar-right">
+        <span id="save-indicator"></span>
+        <button class="btn-primary" onclick="openReport()">📄 Report</button>
+        <button class="btn-ghost"   onclick="saveSurvey()">Save</button>
       </div>
     </header>
-    <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 
-    <!-- Live GPS + Signal sensor bar -->
-    <div class="sensor-bar" id="sensor-bar">
-      <div class="sensor-item">
-        <div class="sensor-dot gps-inactive" id="gps-dot"></div>
-        <span id="gps-status-text">📍 GPS: requesting…</span>
-        <a id="gps-maps-link" class="gps-coords-link" href="#" target="_blank" rel="noopener" style="display:none;margin-left:6px">↗ Maps</a>
-      </div>
-      <div class="sensor-divider"></div>
-      <div class="sensor-item">
-        <div class="signal-mini" id="signal-mini">
-          <div class="signal-mini-bar"></div>
-          <div class="signal-mini-bar"></div>
-          <div class="signal-mini-bar"></div>
-          <div class="signal-mini-bar"></div>
-          <div class="signal-mini-bar"></div>
-        </div>
-        <span id="net-status-text" style="margin-left:6px">🌐 Network: detecting…</span>
-      </div>
-      <div class="sensor-divider"></div>
-      <div class="sensor-item" id="net-speed-item" style="display:none">
-        <span id="net-speed-text" style="font-size:10px;color:var(--text3)"></span>
-      </div>
-    </div>
-
-    <main id="content">
-      <div class="print-header">
-        <div style="display:flex;align-items:center;gap:10px">
-          <svg width="48" height="28" viewBox="0 0 48 28" fill="none">
-            <path d="M2 25 C5 17 9 8 18 4 C14 9 12 16 13 22 C11 23 7 25 2 25Z" fill="#003A5D"/>
-            <path d="M9 25 C12 17 16 8 25 3 C21 9 19 16 20 24 C18 25 13 25 9 25Z" fill="#003A5D" opacity="0.7"/>
-            <path d="M17 25 C20 17 24 8 33 2 C30 9 28 17 30 25Z" fill="#003A5D" opacity="0.45"/>
-          </svg>
-          <div><div style="font-size:20pt;font-weight:900;color:#003A5D;letter-spacing:2px;font-family:Arial Black,Arial,sans-serif">AMTRAK</div><div style="font-size:8pt;color:#666;letter-spacing:1px">Network Site Survey</div></div>
-        </div>
-        <div id="print-date" style="font-size:9pt;color:#333;text-align:right"></div>
+    <!-- PAGE: SITE INFO -->
+    <div class="page active" id="page-info">
+      <div class="page-header">
+        <h1>Site Information</h1>
+        <p>Fill in the basic details about this survey location.</p>
       </div>
 
-      <!-- ── SITE INFO ── -->
-      <section id="site-info" class="survey-section active-section">
-        <div class="section-badge">&#9650; Amtrak IT Infrastructure</div>
-        <div class="section-header">
-          <div class="section-icon">&#127968;</div>
-          <div><h2>Site information</h2><p class="section-sub">Basic details about this survey and the Amtrak site location</p></div>
-        </div>
-        <div class="stats-row">
-          <div class="stat-cell"><div class="stat-num" id="stat-sections">1/8</div><div class="stat-label">Sections complete</div></div>
-          <div class="stat-cell"><div class="stat-num" id="stat-fields">0</div><div class="stat-label">Fields filled</div></div>
-          <div class="stat-cell"><div class="stat-num" id="stat-photos">0</div><div class="stat-label">Photos captured</div></div>
-        </div>
-        <div class="card card-glow">
-          <div class="field-grid col2">
-            <div class="field-group"><label>Site name</label><input type="text" id="site-name" placeholder="e.g. Penn Station – Network Room" oninput="autoSave();updateStats()"></div>
-            <div class="field-group"><label>Survey date</label><input type="date" id="survey-date" oninput="autoSave()"></div>
-            <div class="field-group"><label>Surveyed by</label><input type="text" id="surveyed-by" placeholder="Your name" oninput="autoSave()"></div>
-            <div class="field-group"><label>Ticket / Job #</label><input type="text" id="ticket-num" placeholder="Optional reference" oninput="autoSave()"></div>
-            <div class="field-group col-full"><label>Site address</label><input type="text" id="site-address" placeholder="Street, city, state, ZIP" oninput="autoSave()"></div>
-            <div class="field-group"><label>Floor / Area</label><input type="text" id="floor-area" placeholder="e.g. Floor 2, East wing" oninput="autoSave()"></div>
-            <div class="field-group"><label>Site type</label>
-              <select id="site-type" onchange="autoSave()">
-                <option value="">Select…</option>
+      <div class="card-grid">
+        <div class="card span2">
+          <div class="card-title">📋 Survey Details</div>
+          <div class="form-grid">
+            <div class="field"><label>Site name</label><input id="f-site-name" placeholder="e.g. Penn Station IDF-2"></div>
+            <div class="field"><label>Survey date</label><input id="f-date" type="date"></div>
+            <div class="field"><label>Surveyed by</label><input id="f-by" placeholder="Your name"></div>
+            <div class="field"><label>Ticket / job #</label><input id="f-ticket" placeholder="Optional"></div>
+            <div class="field span2"><label>Site address</label><input id="f-address" placeholder="Street, city, state, ZIP"></div>
+            <div class="field"><label>Floor / area</label><input id="f-floor" placeholder="e.g. Floor 2, East wing"></div>
+            <div class="field"><label>Site type</label>
+              <select id="f-type">
                 <option>Station / Terminal</option><option>Operations Center</option>
                 <option>Office</option><option>Maintenance Facility</option>
-                <option>Data center</option><option>Warehouse</option><option>Other</option>
+                <option>Data Center</option><option>Warehouse</option><option>Other</option>
               </select>
             </div>
           </div>
-          <div class="divider"></div>
-
-          <!-- Network signal widget (auto-filled) -->
-          <h3 class="sub-heading">&#128246; Live device network</h3>
-          <div class="network-widget" id="network-widget">
-            <div class="signal-mini" id="nw-signal-mini">
-              <div class="signal-mini-bar"></div><div class="signal-mini-bar"></div>
-              <div class="signal-mini-bar"></div><div class="signal-mini-bar"></div>
-              <div class="signal-mini-bar"></div>
-            </div>
-            <div>
-              <div class="network-type-badge" id="nw-type">Detecting…</div>
-              <div class="network-speed" id="nw-speed"></div>
-            </div>
-            <button class="network-refresh" onclick="refreshNetwork()">&#8635; Refresh</button>
-            <button class="btn btn-outline" style="padding:5px 12px;font-size:11px;margin-left:4px" onclick="stampNetworkToSurvey()">&#10003; Stamp to survey</button>
-          </div>
-
-          <div class="divider"></div>
-          <div class="field-grid col2">
-            <div class="field-group">
-              <label>Network status</label>
-              <div class="pill-group" id="status-pills">
-                <button class="pill" data-val="operational" onclick="togglePill(this,'status-pills')">&#9679; Operational</button>
-                <button class="pill" data-val="degraded" onclick="togglePill(this,'status-pills')">&#9679; Degraded</button>
-                <button class="pill" data-val="offline" onclick="togglePill(this,'status-pills')">&#9679; Offline</button>
-              </div>
-            </div>
-            <div class="field-group">
-              <label>Signal strength <span id="signal-label" class="field-hint"></span></label>
-              <div class="signal-row">
-                <button class="signal-bar" onclick="setSignal(1)"></button><button class="signal-bar" onclick="setSignal(2)"></button>
-                <button class="signal-bar" onclick="setSignal(3)"></button><button class="signal-bar" onclick="setSignal(4)"></button>
-                <button class="signal-bar" onclick="setSignal(5)"></button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="section-nav"><span></span><button class="btn btn-primary" onclick="goToSection('location')">Next: Location &#8250;</button></div>
-      </section>
-
-      <!-- ── LOCATION ── -->
-      <section id="location" class="survey-section">
-        <div class="section-badge">&#128205; Location &amp; Layout</div>
-        <div class="section-header">
-          <div class="section-icon">&#128205;</div>
-          <div><h2>Location &amp; layout</h2><p class="section-sub">Physical area details — GPS coordinates auto-detected from your device</p></div>
-        </div>
-        <div class="card card-glow">
-          <div class="field-grid col2">
-            <div class="field-group"><label>Building / Campus</label><input type="text" id="building" placeholder="e.g. Building A" oninput="autoSave()"></div>
-            <div class="field-group"><label>Room / Zone</label><input type="text" id="room-zone" placeholder="e.g. Server room 104" oninput="autoSave()"></div>
-
-            <!-- GPS field with auto-stamp -->
-            <div class="field-group col-full">
-              <label>GPS coordinates <span id="gps-accuracy-label" class="field-hint"></span></label>
-              <div class="gps-field-wrap">
-                <input type="text" id="gps" placeholder="Tap &#9655; to get location" oninput="autoSave()" readonly style="cursor:default">
-                <button class="gps-stamp-btn" onclick="stampGPS()" id="gps-stamp-btn">&#9655; Get GPS</button>
-              </div>
-              <div id="gps-map-row" style="display:none;margin-top:6px">
-                <a id="gps-open-maps" href="#" target="_blank" rel="noopener" class="gps-coords-link" style="font-size:11px">&#128506; Open in Google Maps &#8599;</a>
-                <span style="color:var(--text3);font-size:10px;margin-left:12px" id="gps-timestamp"></span>
-              </div>
-            </div>
-
-            <div class="field-group"><label>Nearest landmark</label><input type="text" id="landmark" placeholder="e.g. Near south entrance" oninput="autoSave()"></div>
-            <div class="field-group"><label>Access instructions</label><input type="text" id="access-instructions" placeholder="e.g. Badge access required" oninput="autoSave()"></div>
-            <div class="field-group col-full"><label>Floor plan / coverage notes</label><textarea id="floorplan-notes" rows="4" placeholder="Describe the physical area — walls, obstacles, dead zones, conduit paths, etc." oninput="autoSave()"></textarea></div>
-          </div>
         </div>
 
-        <!-- Photo upload with GPS tagging -->
         <div class="card">
-          <h3 class="sub-heading">&#128247; Site photos <span class="field-hint" style="text-transform:none;letter-spacing:0;font-size:11px">(GPS location auto-tagged on each photo)</span></h3>
-          <div class="photo-grid" id="photo-grid">
-            <div class="photo-upload-btn" onclick="document.getElementById('photo-input').click()"><span>&#128247;</span>Add photo</div>
+          <div class="card-title">🌐 Network Status</div>
+          <div class="status-pills" id="status-pills">
+            <button class="pill" data-val="Operational">🟢 Operational</button>
+            <button class="pill" data-val="Degraded">🟡 Degraded</button>
+            <button class="pill" data-val="Offline">🔴 Offline</button>
           </div>
-          <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotoUpload(this)">
-          <div style="margin-top:10px;display:flex;gap:8px">
-            <input type="file" accept="image/*" capture="environment" onchange="handlePhotoUpload(this)" style="font-size:12px;background:rgba(0,183,217,0.08);border:1px solid rgba(0,183,217,0.25);color:var(--cyan);border-radius:8px;padding:7px 12px;cursor:pointer;flex:1">
-            <span style="font-size:11px;color:var(--text3);align-self:center">← Use device camera</span>
-          </div>
-        </div>
-        <div class="section-nav">
-          <button class="btn btn-ghost" onclick="goToSection('site-info')">&#8249; Site Info</button>
-          <button class="btn btn-primary" onclick="goToSection('existing-eq')">Next: Equipment &#8250;</button>
-        </div>
-      </section>
-
-      <!-- ── EXISTING EQUIPMENT ── -->
-      <section id="existing-eq" class="survey-section">
-        <div class="section-badge">&#128268; Existing Infrastructure</div>
-        <div class="section-header">
-          <div class="section-icon">&#128268;</div>
-          <div><h2>Existing equipment &amp; port mapper</h2><p class="section-sub">Add every device on site, then drag between ports to map all cable connections</p></div>
-        </div>
-
-        <!-- ── ADD DEVICE PANEL ── -->
-        <div class="card card-glow" style="margin-bottom:14px">
-          <h3 class="sub-heading">Add equipment</h3>
-          <div style="margin-bottom:10px">
-            <label style="display:block;margin-bottom:8px;font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;font-weight:600">Device category</label>
-            <div style="display:flex;gap:6px;flex-wrap:wrap" id="device-category-tabs"></div>
-          </div>
-          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:10px">
-            <div class="field-group" style="flex:1;min-width:200px">
-              <label>Model</label>
-              <select id="device-model-select" style="width:100%"><option value="">Choose a model…</option></select>
+          <div class="field" style="margin-top:14px"><label>Signal strength</label>
+            <div class="signal-bars" id="signal-bars">
+              <div class="bar" data-val="1"></div>
+              <div class="bar" data-val="2"></div>
+              <div class="bar" data-val="3"></div>
+              <div class="bar" data-val="4"></div>
+              <div class="bar" data-val="5"></div>
             </div>
-            <button class="btn btn-primary" onclick="addDeviceFromSelect()" style="flex-shrink:0;padding:10px 18px">+ Add to map</button>
-          </div>
-          <!-- Cable type -->
-          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
-            <label style="display:block;margin-bottom:8px;font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;font-weight:600">Cable type for next connection</label>
-            <div style="display:flex;gap:6px;flex-wrap:wrap" id="cable-type-btns"></div>
-          </div>
-          <!-- Legend -->
-          <div class="mapper-legend" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
-            <div class="mapper-legend-item"><div style="width:12px;height:12px;border-radius:2px;background:rgba(0,183,217,0.4);border:1px solid #00B7D9;flex-shrink:0"></div>Cabled port</div>
-            <div class="mapper-legend-item"><div style="width:12px;height:12px;border-radius:2px;background:rgba(74,222,128,0.3);border:1px solid #4ADE80;flex-shrink:0"></div>Device labeled</div>
-            <div class="mapper-legend-item"><div style="width:12px;height:12px;border-radius:2px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);flex-shrink:0"></div>Empty port</div>
-            <div class="mapper-legend-item" style="margin-left:8px;font-size:10px;color:var(--text3)">&#9998; Drag port → port to connect &nbsp;·&nbsp; Drag device body to move</div>
+            <div id="signal-label" class="hint"></div>
           </div>
         </div>
 
-        <!-- ── MAPPER LAYOUT ── -->
-        <div class="mapper-layout">
-          <!-- Device list sidebar -->
-          <div class="mapper-sidebar">
-            <div class="mapper-panel">
-              <h4>&#128268; Devices on site</h4>
-              <div id="mapper-device-list"><p style="color:var(--text3);font-size:12px">No devices added yet.</p></div>
-            </div>
-            <div class="mapper-panel">
-              <h4>&#128305; Cable summary</h4>
-              <div id="mapper-cable-summary" style="font-size:12px;color:var(--text3)">No cables yet.</div>
-              <button class="btn btn-ghost" style="width:100%;margin-top:10px;font-size:11px;padding:6px" onclick="clearAllCables()">&#10006; Clear all cables</button>
-            </div>
-          </div>
-
-          <!-- Canvas + detail -->
-          <div class="mapper-main">
+        <div class="card">
+          <div class="card-title">📡 Live Device Network</div>
+          <div id="net-widget">
+            <div class="net-icon" id="net-icon">🌐</div>
             <div>
-              <div class="mapper-canvas-toolbar">
-                <span style="font-size:11px;color:var(--text2)">&#9998; Drag port → port to connect &nbsp;·&nbsp; Drag device to reposition</span>
-                <div style="margin-left:auto;display:flex;gap:6px">
-                  <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="SwitchMapper.exportCSV()">&#8681; CSV</button>
-                  <button class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="saveMapperToSurvey()">&#10003; Save map</button>
-                </div>
+              <div id="net-type" style="font-weight:600;font-size:14px">Detecting…</div>
+              <div id="net-detail" class="hint"></div>
+            </div>
+          </div>
+          <button class="btn-sm" style="margin-top:10px" onclick="stampNetwork()">Stamp to survey</button>
+        </div>
+
+        <div class="card span2">
+          <div class="card-title">📍 Location Details</div>
+          <div class="form-grid">
+            <div class="field"><label>Building / campus</label><input id="f-building" placeholder="e.g. Building A"></div>
+            <div class="field"><label>Room / zone</label><input id="f-room" placeholder="e.g. Server room 104"></div>
+            <div class="field gps-wrap">
+              <label>GPS coordinates <span id="gps-acc" class="hint"></span></label>
+              <div style="display:flex;gap:8px">
+                <input id="f-gps" placeholder="Tap to capture" readonly style="flex:1">
+                <button class="btn-sm" onclick="captureGPS()">📍 Get GPS</button>
               </div>
-              <div id="mapper-canvas-wrap">
-                <div id="mapper-empty-hint" style="display:flex;align-items:center;justify-content:center;height:480px;color:var(--text3);font-size:13px;flex-direction:column;gap:10px">
-                  <span style="font-size:40px">&#128268;</span>
-                  <div style="text-align:center">Add devices above to start mapping<br><span style="font-size:11px;opacity:0.6">Supports switches, patch panels, PDUs, servers, routers, broadband circuits &amp; more</span></div>
-                </div>
-              </div>
-              <div class="mapper-hint">Tip: Click any port and drag to another port to draw a cable connection. Release on empty space to connect to an external device.</div>
+              <a id="gps-link" href="#" target="_blank" class="hint" style="display:none;margin-top:4px">↗ Open in Google Maps</a>
             </div>
-            <!-- Port detail -->
-            <div class="card" style="padding:16px">
-              <h3 class="sub-heading" style="margin-bottom:10px">&#9776; Device details — <span id="selected-sw-name" style="color:var(--text2);font-weight:400;text-transform:none;letter-spacing:0;font-size:12px">select a device on the map</span></h3>
-              <div id="mapper-port-detail"><p style="color:var(--text3);font-size:12px">Select a device to view and edit its details and port assignments.</p></div>
+            <div class="field"><label>Access instructions</label><input id="f-access" placeholder="e.g. Badge access required"></div>
+            <div class="field span2"><label>Notes / floor plan description</label><textarea id="f-notes" rows="3" placeholder="Describe the layout, obstacles, dead zones…"></textarea></div>
+          </div>
+        </div>
+
+        <div class="card span2">
+          <div class="card-title">🔗 WAN / Circuit Details</div>
+          <div class="form-grid">
+            <div class="field"><label>ISP / carrier</label><input id="f-isp" placeholder="e.g. Comcast Business"></div>
+            <div class="field"><label>Circuit ID</label><input id="f-circuit" placeholder="Provided by ISP"></div>
+            <div class="field"><label>WAN IP</label><input id="f-wanip" placeholder="e.g. 203.0.113.10"></div>
+            <div class="field"><label>Bandwidth</label><input id="f-bw" placeholder="e.g. 500/100 Mbps"></div>
+            <div class="field"><label>SSIDs</label><input id="f-ssid" placeholder="e.g. Corp-WiFi, Guest"></div>
+            <div class="field"><label>Security</label>
+              <select id="f-security"><option>WPA3</option><option>WPA2</option><option>802.1X</option><option>Open</option></select>
             </div>
+            <div class="field"><label>VLANs in use</label><input id="f-vlans" placeholder="e.g. 10, 20, 99"></div>
+            <div class="field"><label>DNS servers</label><input id="f-dns" placeholder="e.g. 8.8.8.8, 1.1.1.1"></div>
           </div>
         </div>
-
-        <!-- Network details (collapsed) -->
-        <div class="card" style="margin-top:14px">
-          <h3 class="sub-heading" style="cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'grid':'none'">
-            &#127760; WAN / network circuit details <span style="font-size:10px;color:var(--text3);font-weight:400">(click to expand)</span>
-          </h3>
-          <div class="field-grid col2" style="display:none">
-            <div class="field-group"><label>ISP / Carrier</label><input type="text" id="isp" placeholder="e.g. Comcast Business" oninput="autoSave()"></div>
-            <div class="field-group"><label>Circuit ID</label><input type="text" id="circuit-id" placeholder="Provided by ISP" oninput="autoSave()"></div>
-            <div class="field-group"><label>WAN IP</label><input type="text" id="wan-ip" placeholder="e.g. 203.0.113.10" oninput="autoSave()"></div>
-            <div class="field-group"><label>Bandwidth</label><input type="text" id="bandwidth" placeholder="e.g. 500 Mbps / 100 Mbps" oninput="autoSave()"></div>
-            <div class="field-group"><label>SSID(s)</label><input type="text" id="ssids" placeholder="e.g. Corp-WiFi, Guest" oninput="autoSave()"></div>
-            <div class="field-group"><label>Security protocol</label>
-              <select id="security-proto" onchange="autoSave()">
-                <option value="">Select…</option><option>WPA3</option><option>WPA2</option><option>WPA</option><option>Open</option><option>802.1X</option>
-              </select>
-            </div>
-            <div class="field-group"><label>VLAN(s) in use</label><input type="text" id="vlans" placeholder="e.g. 10, 20, 99" oninput="autoSave()"></div>
-            <div class="field-group"><label>DNS server(s)</label><input type="text" id="dns" placeholder="e.g. 8.8.8.8, 1.1.1.1" oninput="autoSave()"></div>
-          </div>
-        </div>
-
-        <!-- ── RACK STENCIL ── -->
-        <div class="card card-glow" style="margin-top:14px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-            <h3 class="sub-heading" style="margin-bottom:0">🗄️ Rack stencil — visual layout</h3>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-outline" style="font-size:11px;padding:6px 12px" onclick="rsExportCSV()">⬇ Export CSV</button>
-              <button class="btn btn-ghost"   style="font-size:11px;padding:6px 12px" onclick="rsClearAll()">✕ Clear all</button>
-            </div>
-          </div>
-
-          <!-- Two-column layout -->
-          <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
-
-            <!-- LEFT: controls -->
-            <div style="width:250px;flex-shrink:0;display:flex;flex-direction:column;gap:12px">
-
-              <!-- Step 1: Add rack -->
-              <div style="border:1px solid rgba(0,183,217,0.2);border-radius:var(--radius-lg);padding:14px;background:rgba(0,183,217,0.03)">
-                <div style="font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px">① Add a rack</div>
-                <div style="margin-bottom:8px">
-                  <label style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Label</label>
-                  <input type="text" id="rs-label" placeholder="e.g. MDF Rack A" style="width:100%;padding:8px 10px;font-size:13px;background:rgba(0,20,50,0.7);border:1px solid rgba(0,183,217,0.2);border-radius:8px;color:var(--text);font-family:inherit">
-                </div>
-                <div style="margin-bottom:10px">
-                  <label style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Size</label>
-                  <select id="rs-size" style="width:100%;padding:8px 10px;font-size:13px;background:rgba(0,20,50,0.7);border:1px solid rgba(0,183,217,0.2);border-radius:8px;color:var(--text);font-family:inherit;appearance:none">
-                    <option value="12">12U</option>
-                    <option value="24">24U</option>
-                    <option value="42" selected>42U</option>
-                    <option value="48">48U</option>
-                  </select>
-                </div>
-                <button onclick="rsAddRack()" style="width:100%;padding:9px;background:linear-gradient(135deg,#00B7D9,#0094B3);color:#000814;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">+ Add rack</button>
-              </div>
-
-              <!-- Step 2: Add device -->
-              <div style="border:1px solid rgba(0,183,217,0.2);border-radius:var(--radius-lg);padding:14px;background:rgba(0,183,217,0.03)">
-                <div style="font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">② Add equipment</div>
-                <div id="rs-rack-hint" style="font-size:11px;color:var(--text3);margin-bottom:10px;padding:6px 8px;background:rgba(0,183,217,0.05);border-radius:6px">← Click a rack header to select it first</div>
-
-                <!-- Category -->
-                <div style="margin-bottom:8px">
-                  <label style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Category</label>
-                  <select id="rs-cat" onchange="rsUpdateModels()" style="width:100%;padding:8px 10px;font-size:12px;background:rgba(0,20,50,0.7);border:1px solid rgba(0,183,217,0.2);border-radius:8px;color:var(--text);font-family:inherit;appearance:none">
-                    <option value="switches">🔀 Switches</option>
-                    <option value="patch">🔲 Patch Panels & Fiber</option>
-                    <option value="fiber_enc">🔆 Fiber Enclosures</option>
-                    <option value="routers">🌐 Routers / Firewalls</option>
-                    <option value="servers">🖥️ Servers / NAS</option>
-                    <option value="power">⚡ Power / UPS / PDU</option>
-                    <option value="access">📦 Accessories</option>
-                  </select>
-                </div>
-
-                <!-- Model -->
-                <div style="margin-bottom:8px">
-                  <label style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Model</label>
-                  <select id="rs-model" style="width:100%;padding:8px 10px;font-size:12px;background:rgba(0,20,50,0.7);border:1px solid rgba(0,183,217,0.2);border-radius:8px;color:var(--text);font-family:inherit;appearance:none"></select>
-                </div>
-
-                <!-- Label -->
-                <div style="margin-bottom:10px">
-                  <label style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px">Hostname / label (optional)</label>
-                  <input type="text" id="rs-dev-label" placeholder="e.g. SW-CORE-01" style="width:100%;padding:8px 10px;font-size:12px;background:rgba(0,20,50,0.7);border:1px solid rgba(0,183,217,0.2);border-radius:8px;color:var(--text);font-family:inherit">
-                </div>
-                <button onclick="rsAddDevice()" id="rs-add-btn" style="width:100%;padding:9px;background:rgba(0,183,217,0.12);color:var(--cyan);border:1px solid rgba(0,183,217,0.3);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">+ Add to rack</button>
-              </div>
-
-              <!-- Inventory list -->
-              <div style="border:1px solid rgba(0,183,217,0.15);border-radius:var(--radius-lg);padding:14px;background:rgba(0,183,217,0.02)">
-                <div style="font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px">📋 Inventory</div>
-                <div id="rs-inventory" style="font-size:11px;color:var(--text3)">No racks yet.</div>
-              </div>
-            </div>
-
-            <!-- RIGHT: rack canvas -->
-            <div style="flex:1;min-width:280px">
-              <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Click a rack header to select it · use ▲▼ to reorder devices · ✕ to remove</div>
-              <div id="rs-canvas" style="background:rgba(0,4,14,0.9);border:1px solid rgba(0,183,217,0.15);border-radius:12px;overflow:auto;min-height:520px;padding:16px;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
-                <div id="rs-empty-msg" style="width:100%;height:480px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:rgba(0,183,217,0.3);gap:12px;pointer-events:none">
-                  <div style="font-size:52px">🗄️</div>
-                  <div style="text-align:center;font-size:13px;line-height:1.6">Add a rack using the panel on the left<br><span style="font-size:11px;opacity:.7">You can add multiple racks — they appear here side by side</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="section-nav">
-          <button class="btn btn-ghost" onclick="goToSection('location')">&#8249; Location</button>
-          <button class="btn btn-primary" onclick="goToSection('rack-capture')">Next: Rack Capture &#8250;</button>
-        </div>
-      </section>
-
-      <!-- ── CABLING ── -->
-      <!-- ── RACK CAPTURE ── -->
-      <section id="rack-capture" class="survey-section">
-        <div class="section-badge">&#128247; Visual Rack Documentation</div>
-        <div class="section-header">
-          <div class="section-icon">&#128247;</div>
-          <div><h2>Rack capture &amp; cable tracing</h2><p class="section-sub">Photograph the rack, then trace and label every cable on the image</p></div>
-        </div>
-        <div id="rack-upload-zone" class="card card-glow">
-          <div class="rack-capture-zone" onclick="document.getElementById('rack-input').click()">
-            <span class="rack-capture-icon">&#128423;</span>
-            <div class="rack-capture-title">Photograph your network rack</div>
-            <div class="rack-capture-sub">Upload or take a photo — then draw cable traces directly on the image</div>
-          </div>
-          <input type="file" id="rack-input" accept="image/*" onchange="loadRackImage(this)">
-          <div style="display:flex;gap:10px;margin-top:12px;align-items:center;flex-wrap:wrap">
-            <span style="font-size:12px;color:var(--text2)">Camera:</span>
-            <input type="file" accept="image/*" capture="environment" onchange="loadRackImage(this)" style="font-size:12px;background:rgba(0,183,217,0.08);border:1px solid rgba(0,183,217,0.25);color:var(--cyan);border-radius:8px;padding:6px 12px;cursor:pointer">
-          </div>
-        </div>
-        <div id="rack-editor" style="display:none">
-          <div class="card card-glow" style="padding:0;overflow:hidden">
-            <div class="rack-preview">
-              <img id="rack-img" src="" alt="Rack photo">
-              <canvas id="rack-canvas" class="rack-canvas"></canvas>
-            </div>
-            <div class="rack-toolbar">
-              <label style="font-size:11px;color:var(--text2)">Mode:</label>
-              <button class="btn btn-outline" id="mode-trace" onclick="setMode('trace')" style="padding:6px 12px;font-size:12px">&#9998; Trace</button>
-              <button class="btn btn-ghost" id="mode-label" onclick="setMode('label')" style="padding:6px 12px;font-size:12px">&#128204; Label</button>
-              <button class="btn btn-ghost" id="mode-pan" onclick="setMode('pan')" style="padding:6px 12px;font-size:12px">&#9995; Pan</button>
-              <div style="margin-left:auto;display:flex;gap:6px">
-                <button class="btn btn-ghost" onclick="undoLast()" style="padding:6px 10px;font-size:12px">&#8630; Undo</button>
-                <button class="btn btn-ghost" onclick="clearRack()" style="padding:6px 10px;font-size:12px">&#10006; Clear</button>
-                <button class="btn btn-outline" onclick="saveRackCapture()" style="padding:6px 12px;font-size:12px">&#10003; Save</button>
-                <button class="btn btn-primary" onclick="downloadRack()" style="padding:6px 12px;font-size:12px">&#8681; Export</button>
-              </div>
-            </div>
-            <div style="padding:10px 14px;background:rgba(0,183,217,0.03);border-top:1px solid var(--border)">
-              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                <span style="font-size:11px;color:var(--text2)">Cable color:</span>
-                <div id="color-picker" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-                <span style="font-size:11px;color:var(--text2);margin-left:8px">Label:</span>
-                <input type="text" id="cable-label-input" placeholder="e.g. Uplink to Core SW" style="width:180px;padding:5px 10px;font-size:12px">
-              </div>
-            </div>
-          </div>
-          <div class="card mt-12">
-            <h3 class="sub-heading">&#128305; Traced cables</h3>
-            <div id="cable-list-items"></div>
-            <button class="btn-dashed mt-12" onclick="document.getElementById('rack-input').click()">&#128247; Replace rack photo</button>
-          </div>
-          <div class="card mt-12">
-            <h3 class="sub-heading">Rack notes</h3>
-            <div class="field-grid col2">
-              <div class="field-group"><label>Rack ID / label</label><input type="text" id="rack-id" placeholder="e.g. Rack A, MDF-1" oninput="autoSave()"></div>
-              <div class="field-group"><label>Rack units (U)</label><input type="number" id="rack-units" placeholder="e.g. 42" oninput="autoSave()"></div>
-              <div class="field-group col-full"><label>Rack notes</label><textarea id="rack-notes" rows="3" placeholder="e.g. Top 4U empty, PSU on left, blanks missing at U18-U20" oninput="autoSave()"></textarea></div>
-            </div>
-          </div>
-        </div>
-        <div class="section-nav">
-          <button class="btn btn-ghost" onclick="goToSection('existing-eq')">&#8249; Equipment</button>
-          <button class="btn btn-primary" onclick="goToSection('switch-mapper')">Next: Switch Map &#8250;</button>
-        </div>
-      </section>
-
-
-      <!-- ── FUTURE EQUIPMENT ── -->
-      <section id="future-eq" class="survey-section">
-        <div class="section-badge">&#43; Planned Deployment</div>
-        <div class="section-header">
-          <div class="section-icon">&#43;</div>
-          <div><h2>Planned / future equipment</h2><p class="section-sub">Equipment to be installed — Cisco, Arista, VeloCloud and more</p></div>
-        </div>
-        <div class="chip-row">
-          <span class="chip chip-blue" id="chip-cisco">Cisco: 0</span>
-          <span class="chip chip-green" id="chip-arista">Arista / VeloCloud: 0</span>
-          <span class="chip chip-purple" id="chip-other">Other: 0</span>
-        </div>
-        <div class="card vendor-card card-glow">
-          <div class="vendor-tabs">
-            <button class="vtab" id="vtab-cisco" onclick="setVendor('cisco')">&#9670; Cisco</button>
-            <button class="vtab" id="vtab-arista" onclick="setVendor('arista')">&#9670; Arista / VeloCloud</button>
-            <button class="vtab" id="vtab-other" onclick="setVendor('other')">+ Other vendor</button>
-          </div>
-          <div id="vendor-form"></div>
-        </div>
-        <div id="future-list"></div>
-        <div class="card mt-16">
-          <h3 class="sub-heading">Installation details</h3>
-          <div class="field-grid col2">
-            <div class="field-group"><label>Target install date</label><input type="date" id="install-date" oninput="autoSave()"></div>
-            <div class="field-group"><label>Install priority</label>
-              <select id="install-priority" onchange="autoSave()">
-                <option value="">Select…</option><option>Critical – ASAP</option><option>High – within 30 days</option><option>Medium – within 90 days</option><option>Low – planned</option>
-              </select>
-            </div>
-            <div class="field-group"><label>Assigned installer / vendor</label><input type="text" id="installer" placeholder="Company or technician name" oninput="autoSave()"></div>
-            <div class="field-group"><label>PO / Budget reference</label><input type="text" id="po-ref" placeholder="Optional purchase order #" oninput="autoSave()"></div>
-            <div class="field-group col-full"><label>Installation notes</label><textarea id="install-notes" rows="3" placeholder="e.g. Rack space required, power needs, fiber pre-pull needed" oninput="autoSave()"></textarea></div>
-          </div>
-        </div>
-        <div class="section-nav">
-          <button class="btn btn-ghost" onclick="goToSection('rack-capture')">&#8249; Rack Capture</button>
-          <button class="btn btn-primary" onclick="goToSection('contacts')">Next: Contacts &#8250;</button>
-        </div>
-      </section>
-
-      <!-- ── CONTACTS ── -->
-      <section id="contacts" class="survey-section">
-        <div class="section-badge">&#128101; Key Contacts</div>
-        <div class="section-header">
-          <div class="section-icon">&#128101;</div>
-          <div><h2>Key contacts</h2><p class="section-sub">Site managers, IT staff, and ISP contacts</p></div>
-        </div>
-        <div id="contacts-list"></div>
-        <button class="btn-dashed" onclick="addContact()">+ Add contact</button>
-        <div class="section-nav">
-          <button class="btn btn-ghost" onclick="goToSection('future-eq')">&#8249; Planned</button>
-          <button class="btn btn-primary" onclick="goToSection('findings')">Next: Findings &#8250;</button>
-        </div>
-      </section>
-
-      <!-- ── FINDINGS ── -->
-      <section id="findings" class="survey-section">
-        <div class="section-badge">&#128203; Findings &amp; Summary</div>
-        <div class="section-header">
-          <div class="section-icon">&#128203;</div>
-          <div><h2>Findings &amp; recommendations</h2><p class="section-sub">Summary of issues, recommendations, and next steps</p></div>
-        </div>
-        <div class="card card-glow">
-          <div class="field-grid col1">
-            <div class="field-group"><label>Issues found</label><textarea id="issues" rows="4" placeholder="List any problems identified during the survey" oninput="autoSave()"></textarea></div>
-            <div class="field-group"><label>Recommendations</label><textarea id="recommendations" rows="4" placeholder="e.g. Replace aging switch in IDF-2, add AP to platform B" oninput="autoSave()"></textarea></div>
-          </div>
-          <div class="field-grid col2 mt-12">
-            <div class="field-group"><label>Follow-up required?</label>
-              <select id="followup" onchange="autoSave()">
-                <option value="">Select…</option><option>Yes – urgent</option><option>Yes – scheduled</option><option>No</option>
-              </select>
-            </div>
-            <div class="field-group"><label>Estimated completion</label><input type="date" id="est-completion" oninput="autoSave()"></div>
-            <div class="field-group col-full"><label>Additional notes</label><textarea id="extra-notes" rows="3" placeholder="Anything else relevant to this survey" oninput="autoSave()"></textarea></div>
-          </div>
-        </div>
-        <div class="card mt-16 final-actions">
-          <h3 class="sub-heading">Survey complete</h3>
-          <div class="action-row">
-            <button class="btn btn-ghost" onclick="exportTXT()">&#8681; Text</button>
-            <button class="btn btn-ghost" onclick="exportJSON()">&#8681; JSON</button>
-            <button class="btn btn-outline" onclick="openQR()">&#9707; QR Code</button>
-            <button class="btn btn-outline" onclick="generatePDFReport()" style="background:rgba(0,183,217,0.12)">&#128438; Generate PDF Report</button>
-            <button class="btn btn-primary" onclick="saveSurvey()">&#10003; Save survey</button>
-          </div>
-        </div>
-        <div class="section-nav">
-          <button class="btn btn-ghost" onclick="goToSection('contacts')">&#8249; Contacts</button>
-          <span></span>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- HISTORY MODAL -->
-  <div class="modal-backdrop" id="history-modal">
-    <div class="modal">
-      <div class="modal-header"><h3>&#128193; Survey history</h3><button class="modal-close" onclick="closeModal('history-modal')">&#10005;</button></div>
-      <div id="history-list"></div>
-    </div>
-  </div>
-
-  <!-- QR MODAL -->
-  <div class="modal-backdrop" id="qr-modal">
-    <div class="modal">
-      <div class="modal-header"><h3>&#9707; QR Code</h3><button class="modal-close" onclick="closeModal('qr-modal')">&#10005;</button></div>
-      <div class="field-group" style="margin-bottom:14px">
-        <label>URL to encode</label>
-        <input type="text" id="qr-url-input" placeholder="http://YOUR-LXC-IP:PORT" oninput="regenerateQR()">
       </div>
-      <div class="qr-container"><div id="qr-code"></div><p class="qr-url" id="qr-url-display"></p></div>
-      <div class="qr-actions">
-        <button class="btn btn-ghost" onclick="downloadQR()">&#8681; Download QR</button>
-        <button class="btn btn-primary" onclick="copyQRUrl()">&#128203; Copy URL</button>
+
+      <div class="page-nav">
+        <span></span>
+        <button class="btn-primary" onclick="goPage('equip')">Next: Equipment →</button>
+      </div>
+    </div>
+
+    <!-- PAGE: EQUIPMENT -->
+    <div class="page" id="page-equip">
+      <div class="page-header">
+        <h1>Equipment Inventory</h1>
+        <p>Add all devices found on site. Click a row to expand and add details.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Add device</div>
+        <div class="equip-add-row">
+          <select id="eq-cat" onchange="eqUpdateModels()">
+            <option value="switches">🔀 Switch</option>
+            <option value="patch">🔲 Patch Panel</option>
+            <option value="fiber">🔆 Fiber Panel</option>
+            <option value="router">🌐 Router / Firewall</option>
+            <option value="server">🖥 Server / NAS</option>
+            <option value="power">⚡ UPS / PDU</option>
+            <option value="ap">📶 Access Point</option>
+            <option value="other">📦 Other</option>
+          </select>
+          <select id="eq-model"></select>
+          <input id="eq-hostname" placeholder="Hostname / label (optional)">
+          <button class="btn-primary" onclick="eqAdd()">+ Add</button>
+        </div>
+      </div>
+
+      <div id="eq-list"></div>
+
+      <div class="page-nav">
+        <button class="btn-ghost" onclick="goPage('info')">← Site Info</button>
+        <button class="btn-primary" onclick="goPage('rack')">Next: Rack Layout →</button>
+      </div>
+    </div>
+
+    <!-- PAGE: RACK -->
+    <div class="page" id="page-rack">
+      <div class="page-header">
+        <h1>Rack Layout</h1>
+        <p>Add racks, then drag equipment from the palette into rack slots.</p>
+      </div>
+
+      <div class="rack-workspace">
+        <!-- Palette -->
+        <div class="rack-palette">
+          <div class="card-title" style="margin-bottom:10px">① Add a rack</div>
+          <div class="field"><label>Label</label><input id="rk-label" placeholder="e.g. MDF Rack A"></div>
+          <div class="field"><label>Size</label>
+            <select id="rk-size">
+              <option value="12">12U</option><option value="24">24U</option>
+              <option value="42" selected>42U</option><option value="48">48U</option>
+            </select>
+          </div>
+          <button class="btn-primary" style="width:100%;margin-top:8px" onclick="rkAddRack()">+ Add rack</button>
+
+          <div style="height:1px;background:var(--border);margin:18px 0"></div>
+
+          <div class="card-title" style="margin-bottom:10px">② Place equipment</div>
+          <div class="field"><label>Category</label>
+            <select id="rk-cat" onchange="rkUpdateModels()">
+              <option value="switches">🔀 Switches</option>
+              <option value="patch">🔲 Patch Panels</option>
+              <option value="fiber">🔆 Fiber Panels</option>
+              <option value="router">🌐 Routers / FW</option>
+              <option value="server">🖥 Servers</option>
+              <option value="power">⚡ Power / UPS</option>
+              <option value="access">📦 Accessories</option>
+            </select>
+          </div>
+          <div class="field"><label>Model</label><select id="rk-model"></select></div>
+          <div class="field"><label>Label</label><input id="rk-dev-label" placeholder="e.g. SW-CORE-01"></div>
+          <div id="rk-target-hint" class="hint" style="margin:6px 0 8px">Select a rack slot to place here</div>
+          <button class="btn-primary" style="width:100%" onclick="rkPlaceDevice()">Place in rack</button>
+          <button class="btn-ghost"   style="width:100%;margin-top:6px" onclick="rkExportCSV()">⬇ Export CSV</button>
+          <button class="btn-ghost"   style="width:100%;margin-top:4px" onclick="rkClear()">✕ Clear all</button>
+
+          <div style="height:1px;background:var(--border);margin:18px 0"></div>
+          <div class="card-title" style="margin-bottom:6px">Inventory</div>
+          <div id="rk-inventory" class="hint">No racks yet.</div>
+        </div>
+
+        <!-- Canvas -->
+        <div class="rack-canvas" id="rk-canvas">
+          <div id="rk-empty">
+            <div style="font-size:40px;margin-bottom:12px">🗄️</div>
+            <div>Add a rack using the panel on the left</div>
+            <div class="hint" style="margin-top:6px">Multiple racks appear side by side · Click a slot to select it</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-nav">
+        <button class="btn-ghost" onclick="goPage('equip')">← Equipment</button>
+        <button class="btn-primary" onclick="goPage('photos')">Next: Photos →</button>
+      </div>
+    </div>
+
+    <!-- PAGE: PHOTOS -->
+    <div class="page" id="page-photos">
+      <div class="page-header">
+        <h1>Site Photos</h1>
+        <p>Photos are automatically tagged with GPS location when available.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Add photos</div>
+        <div class="photo-drop" onclick="document.getElementById('photo-input').click()">
+          <div style="font-size:32px;margin-bottom:8px">📷</div>
+          <div>Click to upload photos or use camera</div>
+          <div class="hint" style="margin-top:4px">GPS coordinates are auto-tagged on each photo</div>
+        </div>
+        <input type="file" id="photo-input" accept="image/*" multiple style="display:none" onchange="photosAdd(this)">
+        <input type="file" accept="image/*" capture="environment" style="margin-top:10px;font-size:12px;color:var(--cyan)" onchange="photosAdd(this)">
+      </div>
+
+      <div id="photo-grid"></div>
+
+      <div class="page-nav">
+        <button class="btn-ghost" onclick="goPage('rack')">← Rack Layout</button>
+        <button class="btn-primary" onclick="goPage('findings')">Next: Findings →</button>
+      </div>
+    </div>
+
+    <!-- PAGE: FINDINGS -->
+    <div class="page" id="page-findings">
+      <div class="page-header">
+        <h1>Findings & Recommendations</h1>
+        <p>Document issues, recommendations, and next steps. This feeds directly into the report.</p>
+      </div>
+
+      <div class="card-grid">
+        <div class="card span2">
+          <div class="card-title">🔍 Issues Found</div>
+          <textarea id="f-issues" rows="5" placeholder="List problems found during the survey — e.g. unlabeled cables, missing blanks, damaged ports, no UPS…"></textarea>
+        </div>
+        <div class="card span2">
+          <div class="card-title">💡 Recommendations</div>
+          <textarea id="f-recs" rows="5" placeholder="List recommendations — e.g. replace aging switch, add fiber run, install UPS, upgrade firmware…"></textarea>
+        </div>
+        <div class="card">
+          <div class="card-title">📅 Follow-up</div>
+          <div class="status-pills" id="followup-pills">
+            <button class="pill" data-val="Yes — Urgent">🔴 Urgent</button>
+            <button class="pill" data-val="Yes — Scheduled">🟡 Scheduled</button>
+            <button class="pill" data-val="No">🟢 No action</button>
+          </div>
+          <div class="field" style="margin-top:12px"><label>Estimated completion</label><input id="f-completion" type="date"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">👤 Key Contacts</div>
+          <div id="contacts-list"></div>
+          <button class="btn-sm" style="margin-top:8px" onclick="addContact()">+ Add contact</button>
+        </div>
+        <div class="card span2">
+          <div class="card-title">📝 Additional Notes</div>
+          <textarea id="f-addnotes" rows="3" placeholder="Any other relevant information…"></textarea>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:0;border:1px solid var(--cyan);background:rgba(0,183,217,0.05)">
+        <div class="card-title" style="color:var(--cyan)">Ready to generate your report</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:14px">This creates a professional PDF-ready report for both management and technical audiences.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn-primary" onclick="openReport()" style="font-size:14px;padding:12px 24px">📄 Generate Report</button>
+          <button class="btn-ghost" onclick="saveSurvey()">💾 Save survey</button>
+          <button class="btn-ghost" onclick="exportJSON()">⬇ Export JSON</button>
+        </div>
+      </div>
+
+      <div class="page-nav">
+        <button class="btn-ghost" onclick="goPage('photos')">← Photos</button>
+        <span></span>
       </div>
     </div>
   </div>
-
-  <div id="toast"></div>
 </div>
 
-<script src="data.js"></script>
-<script src="bg.js"></script>
-<script src="sensors.js"></script>
-<script src="rack.js"></script>
-<script src="rack-stencil.js"></script>
-<script src="switch-mapper.js"></script>
-<script src="report.js"></script>
-<script src="app.js"></script>
+<!-- HISTORY MODAL -->
+<div class="modal-bg" id="modal-history">
+  <div class="modal">
+    <div class="modal-hdr"><h3>Survey History</h3><button onclick="closeModal('modal-history')">✕</button></div>
+    <div id="history-body"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="app2.js"></script>
 </body>
 </html>
