@@ -256,18 +256,21 @@
     <div class="page" id="page-photos">
       <div class="page-header">
         <h1>Site Photos</h1>
-        <p>Photos are automatically tagged with GPS location when available.</p>
+        <p>Add photos, then click <strong>Markup</strong> on any photo to draw, annotate, and label it before it goes into the report.</p>
       </div>
 
       <div class="card">
         <div class="card-title">Add photos</div>
         <div class="photo-drop" onclick="document.getElementById('photo-input').click()">
           <div style="font-size:32px;margin-bottom:8px">📷</div>
-          <div>Click to upload photos or use camera</div>
-          <div class="hint" style="margin-top:4px">GPS coordinates are auto-tagged on each photo</div>
+          <div>Click to upload photos — or use the button below for camera</div>
+          <div class="hint" style="margin-top:4px">GPS coordinates auto-tagged · click Markup to annotate any photo</div>
         </div>
         <input type="file" id="photo-input" accept="image/*" multiple style="display:none" onchange="photosAdd(this)">
-        <input type="file" accept="image/*" capture="environment" style="margin-top:10px;font-size:12px;color:var(--cyan)" onchange="photosAdd(this)">
+        <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:12px;color:var(--text2)">Use camera:</label>
+          <input type="file" accept="image/*" capture="environment" style="font-size:12px;color:var(--cyan);background:rgba(0,183,217,.08);border:1px solid var(--border2);border-radius:6px;padding:5px 10px" onchange="photosAdd(this)">
+        </div>
       </div>
 
       <div id="photo-grid"></div>
@@ -275,6 +278,72 @@
       <div class="page-nav">
         <button class="btn-ghost" onclick="goPage('rack')">← Rack Layout</button>
         <button class="btn-primary" onclick="goPage('findings')">Next: Findings →</button>
+      </div>
+    </div>
+
+    <!-- PHOTO MARKUP MODAL -->
+    <div class="modal-bg" id="modal-markup">
+      <div id="markup-shell">
+        <!-- Toolbar -->
+        <div id="markup-toolbar">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1">
+            <!-- Tool buttons -->
+            <button class="mk-tool active" id="mk-pen"    onclick="mkTool('pen')"    title="Pen">✏️ Draw</button>
+            <button class="mk-tool"        id="mk-arrow"  onclick="mkTool('arrow')"  title="Arrow">➜ Arrow</button>
+            <button class="mk-tool"        id="mk-rect"   onclick="mkTool('rect')"   title="Rectangle">⬜ Box</button>
+            <button class="mk-tool"        id="mk-circle" onclick="mkTool('circle')" title="Circle">⭕ Circle</button>
+            <button class="mk-tool"        id="mk-text"   onclick="mkTool('text')"   title="Text label">T Label</button>
+            <button class="mk-tool"        id="mk-blur"   onclick="mkTool('blur')"   title="Blur / redact">🔳 Redact</button>
+
+            <div style="width:1px;height:24px;background:var(--border);margin:0 4px"></div>
+
+            <!-- Color swatches -->
+            <div id="mk-colors" style="display:flex;gap:5px;align-items:center">
+              <div class="mk-color active" data-color="#00B7D9" style="background:#00B7D9" onclick="mkColor(this)"></div>
+              <div class="mk-color" data-color="#EF4444" style="background:#EF4444" onclick="mkColor(this)"></div>
+              <div class="mk-color" data-color="#22C55E" style="background:#22C55E" onclick="mkColor(this)"></div>
+              <div class="mk-color" data-color="#F59E0B" style="background:#F59E0B" onclick="mkColor(this)"></div>
+              <div class="mk-color" data-color="#A855F7" style="background:#A855F7" onclick="mkColor(this)"></div>
+              <div class="mk-color" data-color="#FFFFFF" style="background:#fff;border:1px solid #444" onclick="mkColor(this)"></div>
+              <div class="mk-color" data-color="#000000" style="background:#000;border:1px solid #444" onclick="mkColor(this)"></div>
+            </div>
+
+            <div style="width:1px;height:24px;background:var(--border);margin:0 4px"></div>
+
+            <!-- Stroke size -->
+            <select id="mk-size" style="padding:4px 8px;font-size:11px;width:80px;background:rgba(0,20,50,.8);border:1px solid var(--border2);border-radius:6px;color:var(--text)">
+              <option value="2">Thin</option>
+              <option value="4" selected>Medium</option>
+              <option value="8">Thick</option>
+              <option value="16">Bold</option>
+            </select>
+
+            <button class="mk-action" onclick="mkUndo()" title="Undo">↩ Undo</button>
+            <button class="mk-action" onclick="mkClear()" title="Clear all markup">🗑 Clear</button>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-left:12px;flex-shrink:0">
+            <button class="btn-primary" onclick="mkSave()" style="padding:7px 16px;font-size:12px">✓ Save</button>
+            <button class="btn-ghost"   onclick="mkCancel()" style="padding:7px 14px;font-size:12px">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Caption bar -->
+        <div id="mk-caption-bar">
+          <label style="font-size:11px;color:var(--text2);white-space:nowrap">Photo caption:</label>
+          <input id="mk-caption" type="text" placeholder="Describe what this photo shows (appears in report)" style="flex:1;padding:5px 10px;font-size:12px;background:rgba(0,30,60,.8);border:1px solid var(--border2);border-radius:6px;color:var(--text)">
+          <span id="mk-gps-display" class="hint" style="white-space:nowrap;flex-shrink:0"></span>
+        </div>
+
+        <!-- Canvas area -->
+        <div id="markup-canvas-wrap">
+          <canvas id="markup-canvas"></canvas>
+        </div>
+
+        <!-- Text input overlay -->
+        <div id="mk-text-overlay" style="display:none;position:absolute;z-index:10">
+          <input id="mk-text-input" type="text" placeholder="Type label…" style="background:rgba(0,20,50,.95);border:1px solid var(--cyan);border-radius:6px;padding:6px 10px;font-size:14px;font-weight:700;color:var(--cyan);outline:none;min-width:180px">
+        </div>
       </div>
     </div>
 

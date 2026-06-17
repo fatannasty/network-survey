@@ -480,24 +480,253 @@ function photosAdd(input){
   Array.from(input.files).forEach(function(file){
     var r=new FileReader();
     r.onload=function(e){
-      S.photos.push({src:e.target.result,name:file.name,lat:S.gps.lat,lng:S.gps.lng,ts:new Date().toISOString()});
+      S.photos.push({
+        src:e.target.result,marked:null,caption:'',
+        name:file.name,lat:S.gps.lat,lng:S.gps.lng,
+        ts:new Date().toISOString()
+      });
       renderPhotos();autoSave();
     };
     r.readAsDataURL(file);
   });
   input.value='';
 }
+
 function renderPhotos(){
   var grid=document.getElementById('photo-grid');if(!grid)return;
-  grid.innerHTML=S.photos.map(function(p,i){
-    return '<div class="photo-thumb">'+
-      '<img src="'+p.src+'" alt="'+esc(p.name)+'">'+
-      (p.lat?'<div class="photo-gps-tag">📍 GPS</div>':'')+
-      '<button class="photo-rm" onclick="photoRm('+i+')">✕</button>'+
-    '</div>';
-  }).join('');
+  if(!S.photos.length){
+    grid.innerHTML='<p style="color:var(--hint);font-size:13px;padding:16px 0">No photos yet. Use the upload area above.</p>';
+    return;
+  }
+  grid.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-top:4px">'+
+    S.photos.map(function(p,i){
+      var display=p.marked||p.src;
+      return '<div class="photo-card">'+
+        '<div class="photo-img-wrap" onclick="mkOpen('+i+')" title="Click to add markup">'+
+          '<img src="'+display+'" alt="'+esc(p.caption||p.name)+'">'+
+          (p.lat?'<div class="photo-gps-tag">📍 GPS</div>':'')+
+          (p.marked?'<div class="photo-markup-badge">✏ Annotated</div>':'')+
+        '</div>'+
+        '<div class="photo-card-footer">'+
+          (p.caption
+            ?'<span class="photo-caption-text">'+esc(p.caption)+'</span>'
+            :'<span class="photo-caption-empty">No caption — click to add</span>')+
+          '<button class="mk-action" style="padding:3px 8px;font-size:10px" onclick="mkOpen('+i+')">✏ Markup</button>'+
+          '<button style="background:none;border:none;color:var(--hint);cursor:pointer;font-size:16px;padding:2px 4px;line-height:1" onclick="photoRm('+i+')" title="Remove">✕</button>'+
+        '</div>'+
+      '</div>';
+    }).join('')+
+  '</div>';
 }
-function photoRm(i){S.photos.splice(i,1);renderPhotos();autoSave();}
+
+function photoRm(i){
+  if(!confirm('Remove this photo?'))return;
+  S.photos.splice(i,1);renderPhotos();autoSave();
+}
+
+// ── Markup engine ──────────────────────────────────────
+var MK={idx:-1,tool:'pen',color:'#00B7D9',size:4,strokes:[],redoStack:[],drawing:false,startX:0,startY:0,lastX:0,lastY:0,currentPath:[],imgEl:null,scale:1};
+
+function mkOpen(i){
+  MK.idx=i;
+  var p=S.photos[i];
+  MK.strokes=p.mkStrokes?JSON.parse(JSON.stringify(p.mkStrokes)):[];
+  MK.redoStack=[];
+  var capEl=document.getElementById('mk-caption');if(capEl)capEl.value=p.caption||'';
+  var gpsEl=document.getElementById('mk-gps-display');
+  if(gpsEl)gpsEl.textContent=p.lat?'📍 '+p.lat.toFixed(5)+', '+p.lng.toFixed(5):'';
+  var sizeEl=document.getElementById('mk-size');
+  if(sizeEl)sizeEl.onchange=function(){MK.size=parseInt(sizeEl.value);};
+  // Open modal first so it has real dimensions
+  document.getElementById('modal-markup').classList.add('open');
+  document.body.style.overflow='hidden';
+  mkTool('pen');
+  mkSetupEvents();
+  var img=new Image();
+  img.onload=function(){
+    MK.imgEl=img;
+    // Two rAF to guarantee modal is painted and measurable
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        var canvas=document.getElementById('markup-canvas');
+        var toolbarH=document.getElementById('markup-toolbar')?document.getElementById('markup-toolbar').offsetHeight:56;
+        var captionH=56;
+        var availW=window.innerWidth  - 32;
+        var availH=window.innerHeight - toolbarH - captionH - 32;
+        var scale=Math.min(1, availW/img.naturalWidth, availH/img.naturalHeight);
+        canvas.width =Math.round(img.naturalWidth  * scale);
+        canvas.height=Math.round(img.naturalHeight * scale);
+        MK.scale=scale;
+        mkRedraw();
+      });
+    });
+  };
+  img.src=p.src;
+}
+
+function mkSetupEvents(){
+  var c=document.getElementById('markup-canvas');if(!c)return;
+  c.onmousedown=mkDown;c.onmousemove=mkMove;c.onmouseup=mkUp;c.onmouseleave=mkUp;
+  c.ontouchstart=function(e){e.preventDefault();mkDown(e.touches[0]);};
+  c.ontouchmove=function(e){e.preventDefault();mkMove(e.touches[0]);};
+  c.ontouchend=function(e){e.preventDefault();mkUp(e.changedTouches[0]);};
+}
+
+function mkPos(e){
+  var c=document.getElementById('markup-canvas');
+  var r=c.getBoundingClientRect();
+  return{x:(e.clientX-r.left),y:(e.clientY-r.top)};
+}
+
+function mkDown(e){
+  var p=mkPos(e);
+  if(MK.tool==='text'){mkPromptText(p.x,p.y);return;}
+  MK.drawing=true;MK.startX=p.x;MK.startY=p.y;MK.lastX=p.x;MK.lastY=p.y;
+  if(MK.tool==='pen'||MK.tool==='blur')MK.currentPath=[{x:p.x,y:p.y}];
+}
+
+function mkMove(e){
+  if(!MK.drawing)return;
+  var p=mkPos(e);
+  var c=document.getElementById('markup-canvas');
+  var ctx=c.getContext('2d');
+  if(MK.tool==='pen'||MK.tool==='blur'){
+    MK.currentPath.push({x:p.x,y:p.y});
+    ctx.save();
+    if(MK.tool==='blur'){ctx.strokeStyle='rgba(0,0,0,0.65)';ctx.lineWidth=MK.size*4;ctx.filter='blur(10px)';}
+    else{ctx.strokeStyle=MK.color;ctx.lineWidth=MK.size;ctx.lineCap='round';ctx.lineJoin='round';}
+    ctx.beginPath();ctx.moveTo(MK.lastX,MK.lastY);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.restore();
+  } else {mkRedraw();mkDrawShape(MK.startX,MK.startY,p.x,p.y,true);}
+  MK.lastX=p.x;MK.lastY=p.y;
+}
+
+function mkUp(e){
+  if(!MK.drawing)return;MK.drawing=false;
+  var p=mkPos(e);var stroke;
+  if(MK.tool==='pen'||MK.tool==='blur'){stroke={type:MK.tool,path:MK.currentPath.slice(),color:MK.color,size:MK.size};}
+  else{stroke={type:MK.tool,x1:MK.startX,y1:MK.startY,x2:p.x,y2:p.y,color:MK.color,size:MK.size};}
+  MK.strokes.push(stroke);MK.redoStack=[];mkRedraw();
+}
+
+function mkPromptText(x,y){
+  var overlay=document.getElementById('mk-text-overlay');
+  var input=document.getElementById('mk-text-input');
+  var c=document.getElementById('markup-canvas');
+  var r=c.getBoundingClientRect();
+  overlay.style.cssText='display:block;position:fixed;left:'+(r.left+x)+'px;top:'+(r.top+y-20)+'px;z-index:700';
+  input.value='';input.style.color=MK.color;
+  setTimeout(function(){input.focus();},50);
+  input.onkeydown=function(ev){
+    if(ev.key==='Enter'&&input.value.trim()){commit();}
+    if(ev.key==='Escape'){overlay.style.display='none';}
+  };
+  input.onblur=function(){if(input.value.trim())commit();else overlay.style.display='none';};
+  function commit(){
+    MK.strokes.push({type:'text',tx:x,ty:y,text:input.value.trim(),color:MK.color,size:MK.size});
+    MK.redoStack=[];mkRedraw();overlay.style.display='none';
+  }
+}
+
+function mkRedraw(){
+  var c=document.getElementById('markup-canvas');if(!c||!MK.imgEl)return;
+  var ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.drawImage(MK.imgEl,0,0,c.width,c.height);
+  MK.strokes.forEach(function(s){mkDrawStroke(ctx,s);});
+}
+
+function mkDrawStroke(ctx,s){
+  ctx.save();
+  if(s.type==='pen'){
+    ctx.strokeStyle=s.color;ctx.lineWidth=s.size;ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.beginPath();
+    (s.path||[]).forEach(function(p,i){i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);});
+    ctx.stroke();
+  } else if(s.type==='blur'){
+    ctx.strokeStyle='rgba(0,0,0,0.6)';ctx.lineWidth=(s.size||4)*4;ctx.filter='blur(10px)';ctx.lineCap='round';
+    ctx.beginPath();
+    (s.path||[]).forEach(function(p,i){i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);});
+    ctx.stroke();
+  } else if(s.type==='arrow'){
+    ctx.strokeStyle=s.color;ctx.fillStyle=s.color;ctx.lineWidth=s.size;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(s.x1,s.y1);ctx.lineTo(s.x2,s.y2);ctx.stroke();
+    var ang=Math.atan2(s.y2-s.y1,s.x2-s.x1),ah=Math.max(14,s.size*5);
+    ctx.beginPath();ctx.moveTo(s.x2,s.y2);
+    ctx.lineTo(s.x2-ah*Math.cos(ang-Math.PI/7),s.y2-ah*Math.sin(ang-Math.PI/7));
+    ctx.lineTo(s.x2-ah*Math.cos(ang+Math.PI/7),s.y2-ah*Math.sin(ang+Math.PI/7));
+    ctx.closePath();ctx.fill();
+  } else if(s.type==='rect'){
+    ctx.strokeStyle=s.color;ctx.lineWidth=s.size;
+    ctx.strokeRect(s.x1,s.y1,s.x2-s.x1,s.y2-s.y1);
+  } else if(s.type==='circle'){
+    ctx.strokeStyle=s.color;ctx.lineWidth=s.size;
+    var rx=Math.abs(s.x2-s.x1)/2,ry=Math.abs(s.y2-s.y1)/2;
+    ctx.beginPath();ctx.ellipse(s.x1+(s.x2-s.x1)/2,s.y1+(s.y2-s.y1)/2,rx,ry,0,0,Math.PI*2);ctx.stroke();
+  } else if(s.type==='text'){
+    var fs=Math.max(14,s.size*5);
+    ctx.font='bold '+fs+'px -apple-system,Arial,sans-serif';
+    var tw=ctx.measureText(s.text).width;
+    ctx.fillStyle='rgba(0,8,20,0.78)';
+    ctx.beginPath();ctx.roundRect(s.tx-6,s.ty-fs-2,tw+14,fs+10,5);ctx.fill();
+    ctx.fillStyle=s.color;ctx.textBaseline='alphabetic';ctx.fillText(s.text,s.tx+1,s.ty);
+  }
+  ctx.restore();
+}
+
+function mkDrawShape(x1,y1,x2,y2,preview){
+  var c=document.getElementById('markup-canvas');var ctx=c.getContext('2d');
+  ctx.save();if(preview)ctx.globalAlpha=0.65;
+  ctx.strokeStyle=MK.color;ctx.fillStyle=MK.color;ctx.lineWidth=MK.size;ctx.lineCap='round';
+  if(MK.tool==='arrow'){
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+    var ang=Math.atan2(y2-y1,x2-x1),ah=Math.max(14,MK.size*5);
+    ctx.beginPath();ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-ah*Math.cos(ang-Math.PI/7),y2-ah*Math.sin(ang-Math.PI/7));
+    ctx.lineTo(x2-ah*Math.cos(ang+Math.PI/7),y2-ah*Math.sin(ang+Math.PI/7));
+    ctx.closePath();ctx.fill();
+  } else if(MK.tool==='rect'){ctx.strokeRect(x1,y1,x2-x1,y2-y1);}
+  else if(MK.tool==='circle'){
+    var rx=Math.abs(x2-x1)/2,ry=Math.abs(y2-y1)/2;
+    ctx.beginPath();ctx.ellipse(x1+(x2-x1)/2,y1+(y2-y1)/2,rx,ry,0,0,Math.PI*2);ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function mkTool(t){
+  MK.tool=t;
+  document.querySelectorAll('.mk-tool').forEach(function(b){b.classList.remove('active');});
+  var btn=document.getElementById('mk-'+t);if(btn)btn.classList.add('active');
+  var c=document.getElementById('markup-canvas');
+  if(c)c.style.cursor={'pen':'crosshair','arrow':'crosshair','rect':'crosshair','circle':'crosshair','text':'text','blur':'cell'}[t]||'crosshair';
+}
+
+function mkColor(el){
+  MK.color=el.dataset.color;
+  document.querySelectorAll('.mk-color').forEach(function(b){b.classList.remove('active');});
+  el.classList.add('active');
+}
+
+function mkUndo(){if(!MK.strokes.length)return;MK.redoStack.push(MK.strokes.pop());mkRedraw();}
+
+function mkClear(){if(!confirm('Clear all markup?'))return;MK.strokes=[];MK.redoStack=[];mkRedraw();}
+
+function mkSave(){
+  var c=document.getElementById('markup-canvas');if(!c)return;
+  var capEl=document.getElementById('mk-caption');
+  var p=S.photos[MK.idx];if(!p)return;
+  p.marked=c.toDataURL('image/jpeg',0.92);
+  p.mkStrokes=JSON.parse(JSON.stringify(MK.strokes));
+  p.caption=(capEl&&capEl.value.trim())||p.caption||'';
+  mkClose();renderPhotos();autoSave();toast('Photo saved ✓');
+}
+
+function mkCancel(){mkClose();}
+
+function mkClose(){
+  document.getElementById('modal-markup').classList.remove('open');
+  document.body.style.overflow='';
+}
+
 
 // ── Contacts ───────────────────────────────────────────
 function addContact(){
@@ -830,8 +1059,31 @@ function buildReport(f,now){
     '<div style="overflow-x:auto">'+rackHtml+'</div>'
   ):'')+
 
-  // ── FINDINGS ──
-  section(6,'Findings & Recommendations',
+  // ── PHOTOS ──
+  (S.photos.length?section(6,'Site Photos',
+    '<p style="font-size:10pt;color:#475569;margin-bottom:16px">'+S.photos.length+' photo'+( S.photos.length===1?'':'s')+' captured'+(S.photos.filter(function(p){return p.lat;}).length?' · '+S.photos.filter(function(p){return p.lat;}).length+' with GPS':'')+(S.photos.filter(function(p){return p.marked;}).length?' · '+S.photos.filter(function(p){return p.marked;}).length+' annotated':'')+'</p>'+
+    S.photos.map(function(p,idx){
+      var display=p.marked||p.src;
+      var isEven=idx%2===0;
+      return '<div style="display:flex;gap:0;margin-bottom:24px;page-break-inside:avoid;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06)">'+
+        '<div style="width:320px;flex-shrink:0;background:#000;overflow:hidden">'+
+          '<img src="'+display+'" style="width:320px;height:220px;object-fit:cover;display:block;-webkit-print-color-adjust:exact;print-color-adjust:exact">'+
+        '</div>'+
+        '<div style="flex:1;padding:18px 20px;background:#fff;display:flex;flex-direction:column;justify-content:center">'+
+          '<div style="font-size:11pt;font-weight:700;color:#001E3C;margin-bottom:10px">'+(p.caption?esc(p.caption):'<span style=\"color:#94A3B8;font-style:italic\">No caption</span>')+'</div>'+
+          '<table style="border:none;margin:0;font-size:9pt"><tbody>'+
+            (p.lat?'<tr><td style="border:none;padding:3px 0;color:#64748B;font-weight:600;width:90px">GPS</td><td style="border:none;padding:3px 0;font-family:monospace;color:#334155">'+p.lat.toFixed(5)+', '+p.lng.toFixed(5)+'</td></tr>':'')+
+            '<tr><td style="border:none;padding:3px 0;color:#64748B;font-weight:600">Captured</td><td style="border:none;padding:3px 0;color:#334155">'+new Date(p.ts).toLocaleString()+'</td></tr>'+
+            (p.marked?'<tr><td style="border:none;padding:3px 0;color:#64748B;font-weight:600">Markup</td><td style="border:none;padding:3px 0;color:#00B7D9;font-weight:600">✏ Annotated</td></tr>':'')+
+          '</tbody></table>'+
+          (p.lat?'<a href="https://maps.google.com/?q='+p.lat+','+p.lng+'" style="font-size:9pt;color:#00B7D9;margin-top:8px;display:block">📍 View on Google Maps</a>':'')+
+        '</div>'+
+      '</div>';
+    }).join('')
+  ):'')+
+
+    // ── FINDINGS ──
+  section(7,'Findings & Recommendations',
     (f.issues?'<div class="finding-block issue"><div class="finding-lbl">🔍 Issues Identified</div><div class="finding-text">'+esc(f.issues)+'</div></div>':'')+
     (f.recs?'<div class="finding-block rec"><div class="finding-lbl">💡 Recommendations</div><div class="finding-text">'+esc(f.recs)+'</div></div>':'')+
     '<div style="margin-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+

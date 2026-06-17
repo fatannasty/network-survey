@@ -191,6 +191,11 @@ option{background:#001020}
 /* ── Modal ── */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,10,.75);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .2s;padding:20px}
 .modal-bg.open{opacity:1;pointer-events:all}
+/* Markup modal overrides — must go full screen */
+#modal-markup{padding:0!important;align-items:stretch!important}
+#markup-shell{width:100%;height:100%;min-height:100vh;display:flex;flex-direction:column}
+#markup-canvas-wrap{flex:1;min-height:0;overflow:auto;display:flex;align-items:center;justify-content:center;background:rgba(0,4,14,.95);position:relative}
+#markup-canvas{display:block;cursor:crosshair;touch-action:none}
 .modal{background:rgba(5,15,35,.97);border:1px solid var(--border2);border-radius:16px;padding:24px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 0 60px rgba(0,183,217,.1)}
 .modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .modal-hdr h3{font-size:17px;font-weight:700;color:#fff}
@@ -228,3 +233,68 @@ option{background:#001020}
 
 /* ── Print / PDF ── */
 @media print{body{background:#fff!important;color:#000!important}}
+
+/* ── Photo markup editor ── */
+#modal-markup{ z-index:600; }
+#markup-toolbar{
+  display:flex;align-items:center;gap:8px;padding:10px 14px;
+  background:rgba(0,8,20,.97);border-bottom:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.mk-tool{
+  padding:5px 10px;border-radius:6px;border:1px solid var(--border2);
+  background:transparent;color:var(--text2);font-size:12px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;
+}
+.mk-tool:hover{background:rgba(0,183,217,.08);color:var(--text)}
+.mk-tool.active{background:rgba(0,183,217,.18);border-color:var(--cyan);color:var(--cyan)}
+.mk-action{
+  padding:5px 10px;border-radius:6px;border:1px solid var(--border);
+  background:transparent;color:var(--hint);font-size:11px;cursor:pointer;
+  font-family:inherit;transition:all .15s;white-space:nowrap;
+}
+.mk-action:hover{color:var(--text);border-color:var(--border2)}
+.mk-color{
+  width:20px;height:20px;border-radius:50%;cursor:pointer;
+  border:2px solid transparent;transition:all .15s;flex-shrink:0;
+}
+.mk-color.active{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.3)}
+.mk-color:hover{transform:scale(1.2)}
+
+/* Photo grid cards */
+.photo-card{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+  transition:border-color .15s;
+}
+.photo-card:hover{border-color:var(--border2)}
+.photo-img-wrap{position:relative;aspect-ratio:4/3;background:#000;overflow:hidden;cursor:zoom-in}
+.photo-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-gps-tag{
+  position:absolute;top:7px;left:7px;
+  background:rgba(0,8,20,.85);color:var(--green);
+  font-size:9px;padding:3px 7px;border-radius:4px;
+  border:1px solid rgba(0,196,106,.3);pointer-events:none;
+}
+.photo-markup-badge{
+  position:absolute;top:7px;right:7px;
+  background:rgba(0,183,217,.85);color:#001E3C;
+  font-size:9px;padding:3px 7px;border-radius:4px;font-weight:700;
+}
+.photo-card-footer{
+  padding:8px 12px;display:flex;align-items:center;gap:8px;
+}
+.photo-caption-text{font-size:11px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.photo-caption-empty{font-size:11px;color:var(--hint);flex:1}
+
+/* ── Markup modal full-screen shell ── */
+#markup-shell{background:#060D1A}
+#markup-toolbar{background:rgba(0,8,20,.97);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
+#mk-caption-bar{background:rgba(0,8,20,.9);padding:8px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+
+/* Print: make sure photos render */
+@media print{
+  img{max-width:100%!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .section{page-break-before:always}
+  .cover{page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
